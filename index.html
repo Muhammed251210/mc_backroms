@@ -2,154 +2,196 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Backrooms: Gold Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Backrooms: Ultimate</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Courier New', Courier, monospace; user-select: none; touch-action: none; }
         
-        /* Sinematik Görünüm */
+        /* Atmosfer */
         canvas { display: block; filter: contrast(1.1) brightness(0.9) sepia(0.3); }
 
-        /* TAM EKRAN BUTONU (SOL ÜST) */
+        /* TAM EKRAN BUTONU */
         #fs-btn {
-            position: absolute; top: 20px; left: 20px; z-index: 1000;
+            position: absolute; top: 10px; left: 10px; z-index: 1000;
             background: rgba(0, 0, 0, 0.5); color: #0f0; border: 1px solid #0f0;
-            padding: 10px 15px; cursor: pointer; font-family: inherit; font-weight: bold;
-            transition: 0.2s; text-transform: uppercase; font-size: 14px;
+            padding: 10px 15px; cursor: pointer; font-weight: bold; font-family: inherit;
+            font-size: 14px; pointer-events: auto;
         }
-        #fs-btn:hover { background: #0f0; color: #000; box-shadow: 0 0 10px #0f0; }
 
-        /* --- MENÜLER --- */
+        /* MENÜLER */
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #080808;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 50; color: #ddd;
+            background: #080808; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 50; color: #ddd;
         }
-
-        h1 { font-size: 80px; margin: 0 0 20px 0; text-shadow: 0 0 15px #a00; color: #a00; letter-spacing: 5px; }
+        h1 { font-size: 60px; margin: 0 0 20px 0; color: #a00; text-shadow: 0 0 15px #f00; letter-spacing: 5px; text-align: center; }
         
         .btn {
             padding: 15px 40px; font-size: 24px; background: #222; color: #fff;
             border: 1px solid #555; cursor: pointer; margin: 10px;
-            font-family: inherit; text-transform: uppercase; transition: 0.2s;
-            min-width: 250px;
+            font-family: inherit; text-transform: uppercase; min-width: 250px;
         }
-        .btn:hover { background: #a00; color: #000; border-color: #f00; }
+        .btn:hover { background: #a00; border-color: #f00; color: #000; }
 
-        /* SETUP EKRANI */
+        /* SETUP */
         #setup-panel {
-            background: #151515; border: 1px solid #333; padding: 40px;
-            display: flex; flex-direction: column; gap: 20px; width: 500px;
+            background: #151515; border: 1px solid #333; padding: 30px;
+            display: flex; flex-direction: column; gap: 20px; width: 90%; max-width: 500px;
         }
         .player-row { display: flex; justify-content: space-between; align-items: center; }
-        .player-row label { font-size: 24px; font-weight: bold; }
-        
-        select { 
-            padding: 10px; font-size: 18px; background: #000; color: #0f0; border: 1px solid #333; 
-            width: 250px; font-family: inherit; cursor: pointer;
-        }
-        select option { background: #111; color: #fff; padding: 10px; }
+        select { padding: 10px; font-size: 16px; background: #000; color: #0f0; border: 1px solid #333; }
 
         /* OYUN ARAYÜZÜ */
         #ui-layer { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        .player-screen { position: absolute; top: 0; height: 100%; box-sizing: border-box; overflow: hidden; }
+        #p1-screen { left: 0; width: 100%; }
+        #p2-screen { left: 50%; width: 50%; display: none; }
+
         .crosshair {
             position: absolute; top: 50%; left: 50%; width: 4px; height: 4px;
-            background: #0f0; border-radius: 50%; box-shadow: 0 0 5px #0f0;
+            background: #0f0; border-radius: 50%; box-shadow: 0 0 8px #0f0;
             transform: translate(-50%, -50%);
         }
         .hud-text {
             position: absolute; bottom: 30px; left: 30px;
-            font-size: 36px; font-weight: bold; color: #a00;
-            text-shadow: 2px 2px 0 #000;
+            font-size: 40px; font-weight: bold; text-shadow: 2px 2px 0 #000;
         }
 
+        /* --- DOKUNMATİK KONTROLLER (TOUCH UI) --- */
+        #touch-controls {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 40; pointer-events: none; /* Altına geçirmesin ama butonlar tutsun */
+        }
+        
+        /* Joystick Alanı */
+        #stick-zone {
+            position: absolute; bottom: 50px; left: 50px; width: 150px; height: 150px;
+            background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%; pointer-events: auto;
+        }
+        #stick-knob {
+            position: absolute; top: 50%; left: 50%; width: 60px; height: 60px;
+            background: rgba(255, 255, 255, 0.5); border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Bakış Alanı (Görünmez Sağ Taraf) */
+        #look-zone {
+            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+            pointer-events: auto; z-index: 41;
+        }
+
+        /* Butonlar */
+        .touch-btn {
+            position: absolute; width: 80px; height: 80px; border-radius: 50%;
+            background: rgba(255, 0, 0, 0.2); border: 2px solid rgba(255, 0, 0, 0.5);
+            color: white; font-size: 18px; font-weight: bold;
+            display: flex; align-items: center; justify-content: center;
+            pointer-events: auto; z-index: 42; user-select: none;
+        }
+        .touch-btn:active { background: rgba(255, 0, 0, 0.5); }
+
+        #btn-shoot { bottom: 60px; right: 40px; width: 90px; height: 90px; }
+        #btn-jump { bottom: 160px; right: 60px; background: rgba(0, 255, 255, 0.2); border-color: cyan; }
+
         /* ÖLÜM EKRANI */
-        #death-screen {
-            background: rgba(50, 0, 0, 0.8);
-            display: none; z-index: 60;
+        .local-death-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(50, 0, 0, 0.8); display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: auto; z-index: 60;
         }
     </style>
 </head>
 <body>
 
-    <button id="fs-btn" onclick="toggleFullScreen()">[ ⛶ ] TAM EKRAN</button>
+    <button id="fs-btn" onclick="toggleFullScreen()">TAM EKRAN</button>
 
     <div id="menu-screen" class="screen">
         <h1>BACKROOMS</h1>
-        <p style="color:#666;">SONSUZLUK SİMÜLASYONU</p>
+        <p>MOBİL & PC & GAMEPAD</p>
         <button class="btn" onclick="goToSetup(1)">TEK OYUNCU</button>
         <button class="btn" onclick="goToSetup(2)">2 OYUNCU</button>
     </div>
 
     <div id="setup-screen" class="screen" style="display:none;">
-        <h1>KONTROL SEÇİMİ</h1>
+        <h2>KONTROL SEÇİMİ</h2>
         <div id="setup-panel">
             <div class="player-row">
-                <label style="color:#0ff;">OYUNCU 1</label>
+                <label style="color:#0ff;">P1</label>
                 <select id="p1-input">
+                    <option value="touch">Dokunmatik Ekran</option>
                     <option value="keyboard">Klavye & Mouse</option>
                 </select>
             </div>
             <div class="player-row" id="p2-row">
-                <label style="color:#f0f;">OYUNCU 2</label>
+                <label style="color:#f0f;">P2</label>
                 <select id="p2-input">
+                    <option value="gamepad_0">Gamepad 1</option>
                     <option value="keyboard">Klavye & Mouse</option>
                 </select>
             </div>
         </div>
         <button class="btn" onclick="startGame()">BAŞLAT</button>
-        <p style="font-size:12px; color:#444; margin-top:10px;">* Gamepad bağlandığında liste otomatik güncellenir.</p>
+        <p style="font-size:12px; color:#555;">* Gamepad takınca liste güncellenir.</p>
     </div>
 
     <div id="ui-layer">
-        <div id="p1-hud" style="position:absolute; top:0; left:0; width:100%; height:100%;">
-            <div class="crosshair"></div>
-            <div class="hud-text" id="hp1">HP: 100</div>
+        <div id="touch-controls">
+            <div id="stick-zone"><div id="stick-knob"></div></div>
+            <div id="look-zone"></div>
+            <div id="btn-shoot" class="touch-btn">ATEŞ</div>
+            <div id="btn-jump" class="touch-btn">ZIPLA</div>
         </div>
-        <div id="p2-hud" style="position:absolute; top:0; left:50%; width:50%; height:100%; display:none; border-left:2px solid #555;">
+
+        <div id="p1-screen" class="player-screen">
+            <div class="crosshair"></div>
+            <div class="hud-text" id="hp1" style="color:#0ff;">HP: 100</div>
+            <div id="p1-death" class="local-death-screen">
+                <h1 style="font-size:40px;">ÖLDÜN</h1>
+                <button class="btn" onclick="respawnPlayer(0)">DOĞ</button>
+            </div>
+        </div>
+
+        <div id="p2-screen" class="player-screen">
             <div class="crosshair"></div>
             <div class="hud-text" id="hp2" style="color:#f0f;">HP: 100</div>
+            <div id="p2-death" class="local-death-screen">
+                <h1 style="font-size:40px;">ÖLDÜN</h1>
+                <button class="btn" onclick="respawnPlayer(1)">DOĞ</button>
+            </div>
         </div>
-    </div>
-
-    <div id="death-screen" class="screen">
-        <h1>ÖLDÜN!</h1>
-        <button class="btn" onclick="respawn()">YENİDEN DOĞ</button>
     </div>
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.128.0/build/three.module.js';
 
-        // --- AYARLAR ---
-        const RENDER_DISTANCE = 80;
-        const ZOMBIE_COUNT = 15;
-        const GRAY_COLOR = 0x444444;
+        // AYARLAR
+        const RENDER_DISTANCE = 70;
+        const ZOMBIE_COUNT = 12;
+        const TOUCH_LOOK_SENSITIVITY = 0.005;
+        const JOYSTICK_MAX_RADIUS = 50;
 
-        // --- GLOBAL ---
+        // GLOBAL
         let scene, renderer;
         let players = [];
         let bullets = [];
         let zombies = [];
         let walls = [];
-        
         let lastTime = 0;
-        let selectedMode = 1; 
+        let selectedMode = 1;
         const keys = {};
+        
+        // Touch Input State
+        const touchInput = { x: 0, z: 0, lookX: 0, lookY: 0, shoot: false, jump: false };
 
-        // --- TAM EKRAN FONKSİYONU ---
+        // --- UI & SETUP ---
         window.toggleFullScreen = function() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Hata: ${err.message}`);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
+            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{});
+            else if (document.exitFullscreen) document.exitFullscreen();
         };
 
-        // --- MENÜ YÖNETİMİ ---
         window.goToSetup = function(mode) {
             selectedMode = mode;
             document.getElementById('menu-screen').style.display = 'none';
@@ -165,71 +207,143 @@
         function updateControllerList() {
             const gps = navigator.getGamepads ? navigator.getGamepads() : [];
             const selects = [document.getElementById('p1-input'), document.getElementById('p2-input')];
-            const currentVals = [selects[0].value, selects[1].value];
-
-            selects.forEach(sel => {
-                let html = `<option value="keyboard">Klavye & Mouse</option>`;
-                for(let i=0; i<gps.length; i++) {
-                    if(gps[i]) {
-                        html += `<option value="${i}">Gamepad ${i+1}</option>`;
-                    }
-                }
-                sel.innerHTML = html;
-            });
-
-            if(currentVals[0]) selects[0].value = currentVals[0];
-            if(currentVals[1]) selects[1].value = currentVals[1];
+            
+            // Seçili değerleri korumak için basit logic gerekebilir ama şimdilik sürekli yenileme yapmıyoruz,
+            // sadece listeyi append ediyoruz. Basit tutalım:
+            // (Bu örnekte listeyi sabit tutuyoruz, gamepad varsa ekliyoruz)
+            const sel = document.getElementById('p1-input');
+            if(sel.options.length < 3 && gps[0]) {
+                sel.innerHTML += `<option value="gamepad_0">Gamepad 1</option>`;
+            }
         }
 
         window.startGame = function() {
             document.getElementById('setup-screen').style.display = 'none';
             document.getElementById('ui-layer').style.display = 'block';
 
-            if (selectedMode === 1) {
-                document.getElementById('p1-hud').style.width = '100%';
-                document.getElementById('p2-hud').style.display = 'none';
-            } else {
-                document.getElementById('p1-hud').style.width = '50%';
-                document.getElementById('p2-hud').style.display = 'block';
-            }
-
-            initThreeJS();
-
             const p1Type = document.getElementById('p1-input').value;
             const p2Type = document.getElementById('p2-input').value;
-            
+
+            // Eğer P1 Touch seçtiyse UI'ı aç
+            if (p1Type === 'touch') {
+                document.getElementById('touch-controls').style.display = 'block';
+                setupTouchEvents();
+            }
+
+            if (selectedMode === 2) {
+                document.getElementById('p1-screen').style.width = '50%';
+                document.getElementById('p2-screen').style.display = 'block';
+            }
+
+            initThreeJS(p1Type, p2Type);
+
+            // Klavye varsa Pointer Lock
             if (p1Type === 'keyboard' || (selectedMode === 2 && p2Type === 'keyboard')) {
                 document.body.requestPointerLock();
                 document.addEventListener('click', () => {
-                    // Oyun içi tıklayınca mouse'u tekrar kilitle (Eğer ölüm ekranı yoksa)
-                    if(document.getElementById('death-screen').style.display === 'none') 
+                     // Ölüm ekranı yoksa kilitle
+                     if(document.getElementById('p1-death').style.display === 'none')
                         document.body.requestPointerLock();
                 });
             }
         };
 
-        window.respawn = function() {
-            document.getElementById('death-screen').style.display = 'none';
-            document.body.requestPointerLock();
-            
-            players.forEach(p => {
-                if (p.hp <= 0) {
-                    p.hp = 100;
-                    p.mesh.position.set(0, 2, 0); 
-                    p.velocity.set(0,0,0);
-                    p.dead = false;
-                    p.mesh.rotation.z = 0; 
-                }
-                updateHUD(p.id, 100);
-            });
-            zombies.forEach(z => z.respawn());
+        window.respawnPlayer = function(id) {
+            const p = players[id];
+            if(p) {
+                p.hp = 100; p.dead = false; p.mesh.rotation.z = 0;
+                p.mesh.position.set(id*5, 2, 0);
+                document.getElementById('p'+(id+1)+'-death').style.display = 'none';
+                document.getElementById('hp'+(id+1)).innerText = "HP: 100";
+                
+                // Zombileri temizle
+                zombies.forEach(z => scene.remove(z.mesh));
+                zombies = [];
+            }
         };
 
-        // --- OYUN MOTORU ---
-        function initThreeJS() {
+        // --- TOUCH CONTROLS LOGIC ---
+        function setupTouchEvents() {
+            const stickZone = document.getElementById('stick-zone');
+            const stickKnob = document.getElementById('stick-knob');
+            const lookZone = document.getElementById('look-zone');
+            const btnShoot = document.getElementById('btn-shoot');
+            const btnJump = document.getElementById('btn-jump');
+
+            let stickOrigin = {x:0, y:0};
+            let lastLook = {x:0, y:0};
+
+            // JOYSTICK
+            stickZone.addEventListener('touchstart', e => {
+                e.preventDefault();
+                const rect = stickZone.getBoundingClientRect();
+                stickOrigin = { x: rect.left + rect.width/2, y: rect.top + rect.height/2 };
+                updateStick(e.touches[0]);
+            });
+            stickZone.addEventListener('touchmove', e => {
+                e.preventDefault();
+                updateStick(e.touches[0]);
+            });
+            stickZone.addEventListener('touchend', e => {
+                e.preventDefault();
+                stickKnob.style.transform = `translate(-50%, -50%)`;
+                touchInput.x = 0; touchInput.z = 0;
+            });
+
+            function updateStick(touch) {
+                let dx = touch.clientX - stickOrigin.x;
+                let dy = touch.clientY - stickOrigin.y;
+                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), JOYSTICK_MAX_RADIUS);
+                const angle = Math.atan2(dy, dx);
+                
+                const limitedX = Math.cos(angle) * dist;
+                const limitedY = Math.sin(angle) * dist;
+                
+                stickKnob.style.transform = `translate(calc(-50% + ${limitedX}px), calc(-50% + ${limitedY}px))`;
+                
+                // Normalize -1 to 1
+                touchInput.x = limitedX / JOYSTICK_MAX_RADIUS;
+                touchInput.z = limitedY / JOYSTICK_MAX_RADIUS;
+            }
+
+            // LOOK
+            lookZone.addEventListener('touchstart', e => {
+                e.preventDefault();
+                lastLook = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            });
+            lookZone.addEventListener('touchmove', e => {
+                e.preventDefault();
+                const tx = e.touches[0].clientX; 
+                const ty = e.touches[0].clientY;
+                
+                const dx = tx - lastLook.x;
+                const dy = ty - lastLook.y;
+                
+                // Doğrudan oyuncu dönüşüne ekle (Player update'inde işlenecek)
+                touchInput.lookX = dx;
+                touchInput.lookY = dy;
+                
+                lastLook = { x: tx, y: ty };
+            });
+            lookZone.addEventListener('touchend', e => {
+                e.preventDefault();
+                touchInput.lookX = 0; touchInput.lookY = 0;
+            });
+
+            // BUTTONS
+            btnShoot.addEventListener('touchstart', e => { e.preventDefault(); touchInput.shoot = true; });
+            btnShoot.addEventListener('touchend', e => { e.preventDefault(); touchInput.shoot = false; });
+            
+            btnJump.addEventListener('touchstart', e => { e.preventDefault(); touchInput.jump = true; });
+            btnJump.addEventListener('touchend', e => { e.preventDefault(); touchInput.jump = false; });
+        }
+
+
+        // --- THREE JS ---
+        function initThreeJS(p1Input, p2Input) {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x111111);
-            scene.fog = new THREE.Fog(0x111111, 10, RENDER_DISTANCE);
+            scene.background = new THREE.Color(0x000000);
+            scene.fog = new THREE.Fog(0x000000, 5, RENDER_DISTANCE);
 
             renderer = new THREE.WebGLRenderer({ antialias: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -240,58 +354,55 @@
 
             const aspect = selectedMode === 1 ? window.innerWidth/window.innerHeight : (window.innerWidth/2)/window.innerHeight;
             
-            const p1Input = document.getElementById('p1-input').value;
             players.push(new Player(0, 0x00ffff, p1Input, aspect));
 
             if (selectedMode === 2) {
-                const p2Input = document.getElementById('p2-input').value;
                 players.push(new Player(1, 0xff00ff, p2Input, aspect));
                 players[1].mesh.position.x = 3; 
             }
 
+            // Klavye Listener
             document.addEventListener('keydown', e => keys[e.code] = true);
             document.addEventListener('keyup', e => keys[e.code] = false);
             document.addEventListener('mousemove', e => {
                 if (document.pointerLockElement === document.body) {
-                    players.forEach(p => {
-                        if (p.inputType === 'keyboard' && !p.dead) p.mouseLook(e.movementX, e.movementY);
-                    });
+                    players.forEach(p => { if (p.inputType === 'keyboard' && !p.dead) p.mouseLook(e.movementX, e.movementY); });
                 }
             });
             document.addEventListener('mousedown', () => {
                 if (document.pointerLockElement === document.body) {
-                    players.forEach(p => {
-                        if (p.inputType === 'keyboard' && !p.dead) p.tryShoot();
-                    });
+                    players.forEach(p => { if (p.inputType === 'keyboard' && !p.dead) p.tryShoot(); });
                 }
             });
 
             requestAnimationFrame(animate);
         }
 
-        // --- SINIFLAR ---
         class Player {
             constructor(id, color, inputType, aspect) {
                 this.id = id;
-                this.inputType = inputType;
+                this.inputType = inputType; 
                 this.hp = 100;
                 this.dead = false;
                 
                 this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-                this.pitch = 0;
-                this.yaw = 0;
+                this.pitch = 0; this.yaw = 0;
                 this.velocity = new THREE.Vector3();
                 this.isGrounded = false;
 
                 this.mesh = new THREE.Group();
-                this.mesh.position.y = 2;
+                this.mesh.position.set(0, 2, 0);
+                
+                const bodyGeo = new THREE.BoxGeometry(1, 3, 1);
+                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x222, emissive: color, emissiveIntensity: 1 });
+                this.body = new THREE.Mesh(bodyGeo, bodyMat);
+                this.mesh.add(this.body);
                 scene.add(this.mesh);
 
-                this.light = new THREE.SpotLight(0xffffaa, 3, RENDER_DISTANCE, Math.PI/5, 0.5);
+                this.light = new THREE.SpotLight(color, 3, RENDER_DISTANCE, Math.PI/6, 0.5);
                 this.light.position.set(0,0,0);
                 this.light.target = new THREE.Object3D();
-                this.light.target.position.set(0,0,-5);
-                
+                this.light.target.position.set(0,0,-1);
                 this.camera.add(this.light);
                 this.camera.add(this.light.target);
                 scene.add(this.camera);
@@ -302,29 +413,49 @@
             update(dt) {
                 if (this.dead) return;
 
-                let moveX = 0, moveZ = 0, rotX = 0, rotY = 0;
-                let jump = false, shoot = false;
+                let moveX=0, moveZ=0, rotX=0, rotY=0, jump=false, shoot=false;
 
-                if (this.inputType === 'keyboard') {
+                // --- INPUT HANDLER ---
+                if (this.inputType === 'touch') {
+                    moveX = touchInput.x;
+                    moveZ = touchInput.z;
+                    // Touch look delta'sını al ve sıfırla
+                    rotX = touchInput.lookX * 1.5; 
+                    rotY = touchInput.lookY * 1.5;
+                    touchInput.lookX = 0; // Delta kullanıldığı için sıfırla
+                    touchInput.lookY = 0;
+                    
+                    jump = touchInput.jump;
+                    shoot = touchInput.shoot;
+
+                } else if (this.inputType === 'keyboard') {
                     if (keys['KeyW']) moveZ = -1;
                     if (keys['KeyS']) moveZ = 1;
                     if (keys['KeyA']) moveX = -1;
                     if (keys['KeyD']) moveX = 1;
                     if (keys['Space']) jump = true;
-                } else {
-                    const gp = navigator.getGamepads()[parseInt(this.inputType)];
+                } else if (this.inputType.startsWith('gamepad')) {
+                    const idx = parseInt(this.inputType.split('_')[1]);
+                    const gp = navigator.getGamepads()[idx];
                     if (gp) {
                         if (Math.abs(gp.axes[0]) > 0.1) moveX = gp.axes[0];
                         if (Math.abs(gp.axes[1]) > 0.1) moveZ = gp.axes[1];
-                        if (Math.abs(gp.axes[2]) > 0.1) rotX = gp.axes[2] * 2.0;
-                        if (Math.abs(gp.axes[3]) > 0.1) rotY = gp.axes[3] * 1.5;
+                        if (Math.abs(gp.axes[2]) > 0.1) rotX = gp.axes[2] * 60; // Gamepad sürekli değer döndürür, dt ile çarpılacak
+                        if (Math.abs(gp.axes[3]) > 0.1) rotY = gp.axes[3] * 40;
                         if (gp.buttons[0].pressed) jump = true;
-                        if (gp.buttons[7].pressed || gp.buttons[5].pressed) shoot = true;
+                        if (gp.buttons[7].pressed) shoot = true;
                     }
                 }
 
-                this.yaw -= rotX * dt;
-                this.pitch -= rotY * dt;
+                // --- FİZİK ---
+                if (this.inputType === 'touch') {
+                    // Touch için zaten delta aldık, dt ile çarpmaya gerek yok veya az çarp
+                    this.yaw -= rotX * 0.005;
+                    this.pitch -= rotY * 0.005;
+                } else {
+                    this.yaw -= rotX * dt;
+                    this.pitch -= rotY * dt;
+                }
                 this.pitch = Math.max(-1.5, Math.min(1.5, this.pitch));
 
                 const speed = 12 * dt;
@@ -340,20 +471,18 @@
                     this.mesh.position.add(moveVec.multiplyScalar(speed));
                 }
 
-                if (jump && this.isGrounded) {
-                    this.velocity.y = 12;
-                    this.isGrounded = false;
-                }
+                if (jump && this.isGrounded) { this.velocity.y = 12; this.isGrounded = false; }
                 this.velocity.y -= 30 * dt;
                 this.mesh.position.y += this.velocity.y * dt;
 
                 if (this.mesh.position.y < 2) {
-                    this.mesh.position.y = 2;
-                    this.velocity.y = 0;
-                    this.isGrounded = true;
+                    this.mesh.position.y = 2; this.velocity.y = 0; this.isGrounded = true;
                 }
 
+                // Sync
+                this.mesh.rotation.y = this.yaw;
                 this.camera.position.copy(this.mesh.position);
+                this.camera.position.y += 0.8;
                 this.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
 
                 if (shoot) this.tryShoot();
@@ -377,7 +506,7 @@
                     bullet.quaternion.copy(this.camera.quaternion);
                     bullet.userData = { vel: dir.multiplyScalar(80), life: 1.0 };
                     
-                    const flash = new THREE.PointLight(0xffff00, 1, 4);
+                    const flash = new THREE.PointLight(this.color, 2, 5);
                     flash.position.copy(bullet.position);
                     scene.add(flash);
                     setTimeout(()=>scene.remove(flash), 50);
@@ -388,23 +517,19 @@
                 }
             }
 
-            takeDamage(amount) {
+            takeDamage(val) {
                 if (this.dead) return;
-                this.hp -= amount;
-                updateHUD(this.id, this.hp);
-
+                this.hp -= val;
+                document.getElementById('hp'+(this.id+1)).innerText = "HP: " + Math.ceil(Math.max(0, this.hp));
+                
                 if (this.hp <= 0) {
                     this.dead = true;
-                    this.mesh.rotation.z = Math.PI / 2; 
+                    this.mesh.rotation.z = Math.PI/2; 
                     this.mesh.position.y = 0.5;
-                    
-                    const allDead = players.every(p => p.dead);
-                    if (allDead) {
-                        setTimeout(() => {
-                            document.exitPointerLock();
-                            document.getElementById('death-screen').style.display = 'flex';
-                        }, 1000);
-                    }
+                    // Eğer touch kullanıyorsa UI'ı gizle
+                    if(this.inputType==='touch') document.getElementById('touch-controls').style.display = 'none';
+                    document.exitPointerLock();
+                    document.getElementById('p'+(this.id+1)+'-death').style.display = 'flex';
                 }
             }
         }
@@ -412,34 +537,29 @@
         class Zombie {
             constructor() {
                 const geo = new THREE.BoxGeometry(1, 2.5, 1);
-                const mat = new THREE.MeshStandardMaterial({ color: 0x111, emissive: 0xaa0000, emissiveIntensity: 0.3 });
+                const mat = new THREE.MeshStandardMaterial({ color: 0x222, emissive: 0xff0000, emissiveIntensity: 0.5 });
                 this.mesh = new THREE.Mesh(geo, mat);
                 this.respawn();
                 scene.add(this.mesh);
-                this.speed = 4 + Math.random() * 3;
+                this.speed = 3 + Math.random() * 3;
             }
-
             respawn() {
                 this.hp = 3;
-                const livePlayers = players.filter(p => !p.dead);
-                if (livePlayers.length === 0) return;
+                const targets = players.filter(p => !p.dead);
+                if (targets.length === 0) return;
+                const t = targets[Math.floor(Math.random()*targets.length)];
                 
-                const target = livePlayers[Math.floor(Math.random() * livePlayers.length)];
-                const angle = Math.random() * Math.PI * 2;
-                const dist = 30 + Math.random() * 20;
-                
-                this.mesh.position.x = target.mesh.position.x + Math.cos(angle) * dist;
-                this.mesh.position.z = target.mesh.position.z + Math.sin(angle) * dist;
-                this.mesh.position.y = 1.25;
+                const angle = Math.random()*Math.PI*2;
+                const dist = 30 + Math.random()*20;
+                this.mesh.position.set(t.mesh.position.x + Math.cos(angle)*dist, 1.25, t.mesh.position.z + Math.sin(angle)*dist);
             }
-
             update(dt) {
                 let target = null;
                 let minD = Infinity;
                 players.forEach(p => {
-                    if (!p.dead) {
+                    if(!p.dead) {
                         const d = this.mesh.position.distanceTo(p.mesh.position);
-                        if (d < minD) { minD = d; target = p; }
+                        if(d < minD) { minD = d; target = p; }
                     }
                 });
 
@@ -448,119 +568,97 @@
                     const dir = new THREE.Vector3();
                     this.mesh.getWorldDirection(dir);
                     this.mesh.position.add(dir.multiplyScalar(this.speed * dt));
-                    if (minD < 1.5) {
-                        target.takeDamage(1); 
-                        this.mesh.position.add(dir.negate().multiplyScalar(0.2));
+                    if(minD < 1.5) {
+                        target.takeDamage(1);
+                        this.mesh.position.add(dir.negate().multiplyScalar(0.5));
                     }
                 }
             }
         }
 
         function createWorld() {
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: GRAY_COLOR, roughness: 0.8 }));
-            floor.rotation.x = -Math.PI/2; floor.name = "floor"; scene.add(floor);
-
-            const boxGeo = new THREE.BoxGeometry(4, 8, 4);
-            const boxMat = new THREE.MeshStandardMaterial({ color: GRAY_COLOR });
-            
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(300,300), new THREE.MeshStandardMaterial({color:0x111, roughness:0.8}));
+            floor.rotation.x = -Math.PI/2; floor.name="floor"; scene.add(floor);
+            const boxGeo = new THREE.BoxGeometry(4,8,4);
+            const boxMat = new THREE.MeshStandardMaterial({color:0x444});
             for(let i=0; i<150; i++) {
                 const wall = new THREE.Mesh(boxGeo, boxMat);
-                randomizeWall(wall, {x:0, z:0});
-                scene.add(wall);
-                walls.push(wall);
+                const a = Math.random()*Math.PI*2; const d = 15 + Math.random()*50;
+                wall.position.set(Math.cos(a)*d, 4, Math.sin(a)*d);
+                scene.add(wall); walls.push(wall);
             }
             scene.add(new THREE.AmbientLight(0x333));
         }
 
-        function randomizeWall(wall, center) {
-            const angle = Math.random() * Math.PI * 2;
-            const dist = 10 + Math.random() * RENDER_DISTANCE;
-            wall.position.set(center.x + Math.cos(angle)*dist, 4, center.z + Math.sin(angle)*dist);
-        }
-
         function checkWallCollision(pos) {
-            for (let wall of walls) {
-                const dx = pos.x - wall.position.x;
-                const dz = pos.z - wall.position.z;
-                if (Math.sqrt(dx*dx + dz*dz) < 2.5) return true;
+            for(let w of walls) {
+                const dx = pos.x - w.position.x; const dz = pos.z - w.position.z;
+                if(Math.sqrt(dx*dx + dz*dz) < 2.5) return true;
             }
             return false;
         }
 
-        function updateHUD(pid, hp) {
-            const el = document.getElementById('hp' + (pid+1));
-            if(el) el.innerText = "HP: " + Math.ceil(Math.max(0, hp));
-        }
-
         function animate(time) {
-            const dt = (time - lastTime) / 1000;
-            lastTime = time;
-
+            const dt = (time - lastTime) / 1000; lastTime = time;
             if (zombies.length < ZOMBIE_COUNT) zombies.push(new Zombie());
 
             players.forEach(p => p.update(dt));
             
-            const refPlayer = players.find(p => !p.dead) || players[0];
-            if (refPlayer) {
-                const center = refPlayer.mesh.position;
-                const floor = scene.getObjectByName("floor");
-                if(floor) { floor.position.x = center.x; floor.position.z = center.z; }
-                
+            const refP = players.find(p=>!p.dead) || players[0];
+            if(refP) {
+                const f = scene.getObjectByName("floor");
+                if(f) { f.position.x = refP.mesh.position.x; f.position.z = refP.mesh.position.z; }
                 walls.forEach(w => {
-                    if (w.position.distanceTo(center) > RENDER_DISTANCE) randomizeWall(w, center);
+                    if(w.position.distanceTo(refP.mesh.position) > RENDER_DISTANCE) {
+                        const a = Math.random()*Math.PI*2; const d = 15 + Math.random()*RENDER_DISTANCE;
+                        w.position.set(refP.mesh.position.x + Math.cos(a)*d, 4, refP.mesh.position.z + Math.sin(a)*d);
+                    }
                 });
-
-                zombies.forEach((z, i) => {
+                zombies.forEach(z => {
                     z.update(dt);
-                    if (z.mesh.position.distanceTo(center) > RENDER_DISTANCE + 10) z.respawn();
+                    if(z.mesh.position.distanceTo(refP.mesh.position) > RENDER_DISTANCE + 10) z.respawn();
                 });
             }
 
-            bullets.forEach((b, i) => {
+            bullets.forEach((b,i) => {
                 b.position.add(b.userData.vel.clone().multiplyScalar(dt));
                 b.userData.life -= dt;
                 let hit = false;
                 for(let z of zombies) {
                     if(b.position.distanceTo(z.mesh.position) < 1.5) {
-                        z.hp--;
-                        hit = true;
-                        if(z.hp <= 0) z.respawn();
-                        break;
+                        z.hp--; hit = true; if(z.hp<=0) z.respawn(); break;
                     }
                 }
-                if(hit || b.userData.life <= 0) { scene.remove(b); bullets.splice(i, 1); }
+                if(hit || b.userData.life <= 0) { scene.remove(b); bullets.splice(i,1); }
             });
 
             renderer.clear();
-            if (selectedMode === 1 && players[0]) {
-                renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
-                renderer.setScissor(0, 0, window.innerWidth, window.innerHeight);
-                renderer.setScissorTest(false);
-                renderer.render(scene, players[0].camera);
-            } else if (selectedMode === 2) {
-                const w = window.innerWidth, h = window.innerHeight;
-                renderer.setScissorTest(true);
-                if(players[0]) {
-                    renderer.setViewport(0, 0, w/2, h);
-                    renderer.setScissor(0, 0, w/2, h);
+            const w = window.innerWidth, h = window.innerHeight;
+
+            if (selectedMode === 1) {
+                if(!players[0].dead) {
+                    renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(false);
                     renderer.render(scene, players[0].camera);
                 }
-                if(players[1]) {
-                    renderer.setViewport(w/2, 0, w/2, h);
-                    renderer.setScissor(w/2, 0, w/2, h);
+            } else {
+                renderer.setScissorTest(true);
+                if(!players[0].dead) {
+                    renderer.setViewport(0,0,w/2,h); renderer.setScissor(0,0,w/2,h);
+                    renderer.render(scene, players[0].camera);
+                }
+                if(!players[1].dead) {
+                    renderer.setViewport(w/2,0,w/2,h); renderer.setScissor(w/2,0,w/2,h);
                     renderer.render(scene, players[1].camera);
                 }
             }
-
             requestAnimationFrame(animate);
         }
 
         window.addEventListener('resize', () => {
             renderer.setSize(window.innerWidth, window.innerHeight);
-            if(players[0]) players[0].camera.aspect = selectedMode === 1 ? window.innerWidth/window.innerHeight : (window.innerWidth/2)/window.innerHeight;
+            if(players[0]) players[0].camera.aspect = selectedMode===1 ? window.innerWidth/window.innerHeight : (window.innerWidth/2)/window.innerHeight;
             if(players[1]) players[1].camera.aspect = (window.innerWidth/2)/window.innerHeight;
-            if(players[0]) players[0].camera.updateProjectionMatrix();
-            if(players[1]) players[1].camera.updateProjectionMatrix();
+            players.forEach(p => p.camera.updateProjectionMatrix());
         });
     </script>
 </body>
