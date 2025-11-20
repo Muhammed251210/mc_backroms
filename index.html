@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: Final Fix</title>
+    <title>Horror: Hospital Fix</title>
     <style>
         body { 
-            margin: 0; overflow: hidden; background: #E5D68E; 
+            margin: 0; overflow: hidden; background: #000; 
             font-family: 'Courier New', Courier, monospace; 
             user-select: none; -webkit-user-select: none; 
             touch-action: none; 
@@ -14,10 +14,9 @@
         
         canvas { display: block; }
 
-        /* HASAR EFEKTİ */
         #damage-flash {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 50%, rgba(255,0,0,0.6) 100%);
+            background: radial-gradient(circle, transparent 50%, rgba(200,0,0,0.8) 100%);
             opacity: 0; pointer-events: none; transition: opacity 0.1s;
             z-index: 45;
         }
@@ -29,42 +28,47 @@
             font-family: sans-serif;
         }
 
-        /* MENÜLER */
         .screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #cbb968; 
+            background: #111; 
             display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 50; color: #333;
+            align-items: center; justify-content: center; z-index: 50; color: #ddd;
+            transition: background 0.5s;
         }
-        h1 { font-size: 60px; color: #444; text-shadow: 2px 2px 0px #eee; margin: 0 0 20px 0; letter-spacing: 2px; text-align: center; }
+        
+        .screen.backrooms-bg { background: #cbb968; color: #222; }
+        .screen.hospital-bg { 
+            background: #15202b; color: #a0c0d0; /* Daha açık mavi arka plan */
+        }
+
+        h1 { font-size: 50px; margin: 0 0 20px 0; letter-spacing: 5px; text-align: center; text-transform: uppercase; text-shadow: 0 0 10px currentColor; }
         
         .btn {
-            padding: 15px 40px; font-size: 20px; background: #777; color: #fff;
-            border: 4px solid #555; border-left-color: #999; border-top-color: #999;
-            cursor: pointer; margin: 10px; min-width: 250px; font-family: 'Courier New', monospace; font-weight: bold;
+            padding: 20px 50px; font-size: 20px; background: rgba(0,0,0,0.5); color: inherit;
+            border: 3px solid currentColor; 
+            cursor: pointer; margin: 10px; min-width: 300px; font-family: 'Courier New', monospace; font-weight: bold;
+            transition: 0.2s;
         }
-        .btn:hover { background: #888; color: #ff0; }
+        .btn:hover { background: currentColor; color: #000; transform: scale(1.05); }
 
         #setup-panel {
-            background: #aaa; border: 2px solid #555; padding: 30px;
+            background: rgba(0,0,0,0.8); border: 2px solid currentColor; padding: 30px;
             display: flex; flex-direction: column; gap: 20px; width: 90%; max-width: 500px;
         }
         .player-row { display: flex; justify-content: space-between; align-items: center; }
-        select { padding: 10px; background: #555; color: #fff; border: 2px solid #333; }
+        select { padding: 10px; background: #000; color: #fff; border: 1px solid #555; }
 
         #ui-layer { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .player-screen { position: absolute; top: 0; height: 100%; box-sizing: border-box; overflow: hidden; }
         #p1-screen { left: 0; width: 100%; }
         #p2-screen { left: 50%; width: 50%; display: none; border-left: 2px solid #fff; }
 
-        /* UI ELEMENTLERİ */
         .mc-crosshair {
             position: absolute; top: 50%; left: 50%; width: 20px; height: 20px;
             transform: translate(-50%, -50%);
         }
         .mc-crosshair::before, .mc-crosshair::after {
-            content: ''; position: absolute; background: rgba(200, 200, 200, 0.8); 
-            mix-blend-mode: difference; 
+            content: ''; position: absolute; background: rgba(255, 255, 255, 0.8); mix-blend-mode: difference; 
         }
         .mc-crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; } 
         .mc-crosshair::after { top: 0; left: 9px; width: 2px; height: 20px; }
@@ -74,12 +78,7 @@
             font-size: 24px; font-weight: bold; color: #f22; text-shadow: 2px 2px 0 #000;
         }
 
-        /* TOUCH */
-        .touch-layer {
-            display: none; position: absolute; top: 0; height: 100%; width: 100%; pointer-events: none;
-        }
-        
-        /* Bölünmüş Touch Alanları */
+        .touch-layer { display: none; position: absolute; top: 0; height: 100%; width: 100%; pointer-events: none; }
         #p1-touch { left: 0; width: 100%; }
         #p2-touch { left: 50%; width: 50%; }
 
@@ -88,8 +87,7 @@
         
         .joystick-base {
             position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; border-radius: 50%;
-            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3);
-            pointer-events: none; 
+            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); pointer-events: none; 
         }
         .joystick-stick {
             position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; border-radius: 50%;
@@ -107,7 +105,7 @@
 
         .local-death-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(100, 0, 0, 0.6); display: none;
+            background: rgba(0, 0, 0, 0.9); display: none;
             flex-direction: column; align-items: center; justify-content: center;
             pointer-events: auto; z-index: 70; color: white;
         }
@@ -118,15 +116,22 @@
     <div id="damage-flash"></div>
     <button id="fs-btn" onclick="toggleFullScreen()">TAM EKRAN</button>
 
-    <div id="menu-screen" class="screen">
-        <h1>THE BACKROOMS</h1>
-        <p>FIXED COMBAT</p>
-        <button class="btn" onclick="goToSetup(1)">TEK OYUNCU</button>
-        <button class="btn" onclick="goToSetup(2)">2 OYUNCU</button>
+    <div id="map-screen" class="screen hospital-bg">
+        <h1>BÖLGE SEÇİMİ</h1>
+        <button class="btn" onclick="selectMap(1)" style="color:#E5D68E; border-color:#E5D68E;">THE BACKROOMS</button>
+        <button class="btn" onclick="selectMap(2)" style="color:#a0c0d0; border-color:#a0c0d0;">TERK EDİLMİŞ HASTANE</button>
+    </div>
+
+    <div id="menu-screen" class="screen" style="display:none;">
+        <h1 id="map-title">OYUN MODU</h1>
+        <div style="display:flex; gap:20px;">
+            <button class="btn" onclick="goToSetup(1)">TEK OYUNCU</button>
+            <button class="btn" onclick="goToSetup(2)">2 OYUNCU</button>
+        </div>
     </div>
 
     <div id="setup-screen" class="screen" style="display:none;">
-        <h2>AYARLAR</h2>
+        <h2>KONTROLLER</h2>
         <div id="setup-panel">
             <div class="player-row">
                 <label>P1</label>
@@ -141,15 +146,12 @@
     </div>
 
     <div id="ui-layer">
-        <!-- P1 UI -->
+        <!-- P1 -->
         <div id="p1-screen" class="player-screen">
             <div class="mc-crosshair"></div>
             <div class="hud-text" id="hp1">❤❤❤❤❤</div>
-            <div id="p1-death" class="local-death-screen">
-                <h1>ÖLDÜN!</h1><button class="btn" onclick="respawnPlayer(0)">DOĞ</button>
-            </div>
+            <div id="p1-death" class="local-death-screen"><h1>ÖLDÜN!</h1><button class="btn" onclick="respawnPlayer(0)">DOĞ</button></div>
         </div>
-        <!-- P1 TOUCH -->
         <div id="p1-touch" class="touch-layer">
             <div id="p1-zone-move" class="zone-move"></div><div id="p1-zone-look" class="zone-look"></div>
             <div class="joystick-base" id="p1-base"><div class="joystick-stick" id="p1-stick"></div></div>
@@ -157,15 +159,12 @@
             <div id="p1-btn-jump" class="touch-btn btn-jump">JMP</div>
         </div>
 
-        <!-- P2 UI -->
+        <!-- P2 -->
         <div id="p2-screen" class="player-screen">
             <div class="mc-crosshair"></div>
             <div class="hud-text" id="hp2">❤❤❤❤❤</div>
-            <div id="p2-death" class="local-death-screen">
-                <h1>ÖLDÜN!</h1><button class="btn" onclick="respawnPlayer(1)">DOĞ</button>
-            </div>
+            <div id="p2-death" class="local-death-screen"><h1>ÖLDÜN!</h1><button class="btn" onclick="respawnPlayer(1)">DOĞ</button></div>
         </div>
-        <!-- P2 TOUCH -->
         <div id="p2-touch" class="touch-layer">
             <div id="p2-zone-move" class="zone-move"></div><div id="p2-zone-look" class="zone-look"></div>
             <div class="joystick-base" id="p2-base"><div class="joystick-stick" id="p2-stick"></div></div>
@@ -177,36 +176,47 @@
     <script type="module">
         import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
 
-        const COLOR_WALL = 0xE5D68E; const COLOR_FLOOR = 0x8F876F; const COLOR_CEILING = 0xF2F2F2; const COLOR_FOG = 0xE5D68E;
-        const RENDER_DISTANCE = 60;
-        const MAX_ZOMBIES = 12;
-        const SPAWN_DELAY_MS = 2500;
-        const START_DELAY_MS = 4000;
-        
-        const MOVE_SPEED = 8; // Hız biraz arttırıldı
-        const COLLISION_DISTANCE = 2.0; 
+        const RENDER_DISTANCE = 120; 
+        const MAX_ZOMBIES = 20;
+        const SPAWN_DELAY_MS = 2000;
+        const START_DELAY_MS = 3000;
+        const MOVE_SPEED = 6; 
+        const PLAYER_RADIUS = 0.6;
 
         let scene, renderer;
         let players = [];
         let bullets = [];
         let zombies = [];
-        let walls = [];
+        let wallBoxes = []; 
+        
         let lastTime = 0;
         let selectedMode = 1;
+        let currentMap = 1; 
         const keys = {};
         let gameStartTime = 0, lastSpawnTime = 0;
 
-        // Touch States (P1, P2)
         const touchStates = [
             { moveId: null, lookId: null, startX: 0, startY: 0, moveX: 0, moveY: 0, lastLookX: 0, lastLookY: 0, lookDeltaX: 0, lookDeltaY: 0, shoot: false, jump: false },
             { moveId: null, lookId: null, startX: 0, startY: 0, moveX: 0, moveY: 0, lastLookX: 0, lastLookY: 0, lookDeltaX: 0, lookDeltaY: 0, shoot: false, jump: false }
         ];
 
-        const MAT_GREEN = new THREE.MeshStandardMaterial({ color: 0x228B22 });
-        const MAT_BLUE = new THREE.MeshStandardMaterial({ color: 0x00AAAA });
-        const MAT_PURPLE = new THREE.MeshStandardMaterial({ color: 0x4400AA });
-        const MAT_BULLET = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+        const MAT_ZOMBIE_GREEN = new THREE.MeshStandardMaterial({ color: 0x228B22 });
+        const MAT_ZOMBIE_BLUE = new THREE.MeshStandardMaterial({ color: 0x00AAAA });
+        const MAT_ZOMBIE_PURPLE = new THREE.MeshStandardMaterial({ color: 0x4400AA });
+        const GEO_HEAD = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+        const GEO_BODY = new THREE.BoxGeometry(0.8, 1.2, 0.4);
+        const GEO_LIMB = new THREE.BoxGeometry(0.4, 1.2, 0.4);
+        const MAT_BULLET = new THREE.MeshBasicMaterial({ color: 0xffff00 });
         const GEO_BULLET = new THREE.BoxGeometry(0.1, 0.1, 1);
+
+        window.selectMap = function(mapId) {
+            currentMap = mapId;
+            document.getElementById('map-screen').style.display = 'none';
+            document.getElementById('menu-screen').style.display = 'flex';
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.className = 'screen ' + (mapId === 1 ? 'backrooms-bg' : 'hospital-bg'));
+            document.getElementById('map-title').innerText = mapId === 1 ? "THE BACKROOMS" : "HASTANE";
+        };
 
         window.toggleFullScreen = function() {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{});
@@ -237,8 +247,6 @@
             if (selectedMode === 2) {
                 document.getElementById('p1-screen').style.width = '50%';
                 document.getElementById('p2-screen').style.display = 'block';
-                
-                // Touch alanlarını ayarla
                 document.getElementById('p1-touch').style.width = '50%';
                 document.getElementById('p2-touch').style.width = '50%';
                 document.getElementById('p2-touch').style.left = '50%';
@@ -289,14 +297,12 @@
             const joyBase = document.getElementById(prefix + '-base');
             const bShoot = document.getElementById(prefix + '-btn-shoot');
             const bJump = document.getElementById(prefix + '-btn-jump');
-            
             const state = touchStates[pid];
-            const JOYSTICK_RADIUS = 50;
-
-            // Joystick Merkezi
+            
             let baseRect = joyBase.getBoundingClientRect();
             let joyCenterX = baseRect.left + baseRect.width / 2;
             let joyCenterY = baseRect.top + baseRect.height / 2;
+            const JOYSTICK_RADIUS = 50;
 
             window.addEventListener('resize', () => {
                 baseRect = joyBase.getBoundingClientRect();
@@ -323,11 +329,9 @@
                 let dy = t.clientY - joyCenterY;
                 const dist = Math.min(Math.sqrt(dx*dx + dy*dy), JOYSTICK_RADIUS);
                 const angle = Math.atan2(dy, dx);
-                const lx = Math.cos(angle) * dist;
-                const ly = Math.sin(angle) * dist;
+                const lx = Math.cos(angle) * dist; const ly = Math.sin(angle) * dist;
                 joyStick.style.transform = `translate(calc(-50% + ${lx}px), calc(-50% + ${ly}px))`;
-                state.moveX = lx / JOYSTICK_RADIUS;
-                state.moveY = ly / JOYSTICK_RADIUS;
+                state.moveX = lx / JOYSTICK_RADIUS; state.moveY = ly / JOYSTICK_RADIUS;
             }
 
             const endMove = (e) => {
@@ -342,7 +346,6 @@
             moveZone.addEventListener('touchend', endMove);
             moveZone.addEventListener('touchcancel', endMove);
 
-            // Bakış
             lookZone.addEventListener('touchstart', e => {
                 e.preventDefault(); if (state.lookId !== null) return;
                 const t = e.changedTouches[0];
@@ -378,15 +381,25 @@
 
         function initThreeJS(p1Input, p2Input) {
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(COLOR_FOG); 
-            scene.fog = new THREE.Fog(COLOR_FOG, 5, RENDER_DISTANCE);
+            
+            let fogColor;
+            if (currentMap === 1) { // Backrooms
+                fogColor = 0xE5D68E;
+                scene.background = new THREE.Color(fogColor);
+                scene.fog = new THREE.Fog(fogColor, 5, RENDER_DISTANCE);
+            } else { // Hospital (Karanlık, Mavi/Gri)
+                fogColor = 0x15202b; 
+                scene.background = new THREE.Color(fogColor);
+                scene.fog = new THREE.Fog(fogColor, 5, RENDER_DISTANCE); 
+            }
             
             renderer = new THREE.WebGLRenderer({ antialias: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.autoClear = false;
             document.body.appendChild(renderer.domElement);
 
-            createWorld();
+            if (currentMap === 1) createBackrooms();
+            else createHospital();
 
             const aspect = selectedMode === 1 ? window.innerWidth/window.innerHeight : (window.innerWidth/2)/window.innerHeight;
             players.push(new Player(0, 0x00ffff, p1Input, aspect));
@@ -416,11 +429,19 @@
                 this.velocity = new THREE.Vector3(); this.isGrounded = false;
                 this.mesh = new THREE.Group(); this.mesh.position.set(0, 2, 0);
                 
+                this.box = new THREE.Box3();
+                
                 const bodyGeo = new THREE.BoxGeometry(1, 3, 1);
                 const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333, emissive: color, emissiveIntensity: 0.5 });
                 this.body = new THREE.Mesh(bodyGeo, bodyMat);
                 this.mesh.add(this.body);
                 scene.add(this.mesh);
+                
+                const intensity = currentMap === 1 ? 2 : 4;
+                this.light = new THREE.SpotLight(0xffffff, intensity, RENDER_DISTANCE, Math.PI/4, 0.5);
+                this.light.position.set(0,0,0); this.light.target = new THREE.Object3D(); this.light.target.position.set(0,0,-1);
+                this.camera.add(this.light); this.camera.add(this.light.target);
+                scene.add(this.camera);
                 this.shootCooldown = 0;
             }
 
@@ -462,8 +483,16 @@
                 moveVec.add(dir.multiplyScalar(-moveZ));
                 moveVec.add(side.multiplyScalar(moveX));
 
-                const nextPos = this.mesh.position.clone().add(moveVec.clone().multiplyScalar(speed));
-                if (!checkWallCollision(nextPos)) this.mesh.position.add(moveVec.multiplyScalar(speed));
+                // KATI ÇARPIŞMA
+                let testPos = this.mesh.position.clone();
+                testPos.x += moveVec.x * speed;
+                this.updateBox(testPos);
+                if (!this.checkCollision()) { this.mesh.position.x += moveVec.x * speed; }
+                
+                testPos = this.mesh.position.clone();
+                testPos.z += moveVec.z * speed;
+                this.updateBox(testPos);
+                if (!this.checkCollision()) { this.mesh.position.z += moveVec.z * speed; }
 
                 if (jump && this.isGrounded) { this.velocity.y = 12; this.isGrounded = false; }
                 this.velocity.y -= 30 * dt;
@@ -478,6 +507,19 @@
                 if (this.shootCooldown > 0) this.shootCooldown -= dt;
             }
 
+            updateBox(pos) {
+                const p = pos || this.mesh.position;
+                this.box.min.set(p.x - PLAYER_RADIUS, p.y - 1, p.z - PLAYER_RADIUS);
+                this.box.max.set(p.x + PLAYER_RADIUS, p.y + 2, p.z + PLAYER_RADIUS);
+            }
+
+            checkCollision() {
+                for(let wb of wallBoxes) {
+                    if(this.box.intersectsBox(wb)) return true;
+                }
+                return false;
+            }
+
             mouseLook(mx, my) {
                 this.yaw -= mx * 0.002; this.pitch -= my * 0.002;
                 this.pitch = Math.max(-1.5, Math.min(1.5, this.pitch));
@@ -490,6 +532,20 @@
                     bullet.position.copy(this.camera.position).add(dir.clone().multiplyScalar(1));
                     bullet.quaternion.copy(this.camera.quaternion);
                     bullet.userData = { vel: dir.multiplyScalar(80), life: 1.0 };
+                    
+                    // RAYCAST HITSCAN
+                    const raycaster = new THREE.Raycaster(this.camera.position, dir);
+                    let hitFound = false;
+                    for(let z of zombies) {
+                         // Zombi "hitbox" küresi (genişletilmiş)
+                         const zCenter = z.mesh.position.clone().add(new THREE.Vector3(0, 1.5, 0));
+                         const distSq = bullet.position.distanceToSquared(zCenter);
+                         // Hızlı raycast
+                         const intersect = raycaster.intersectObjects(z.mesh.children);
+                         if(intersect.length > 0 && intersect[0].distance < 100) {
+                             z.hit(); hitFound = true; break;
+                         }
+                    }
                     scene.add(bullet); bullets.push(bullet);
                     this.shootCooldown = 0.15;
                 }
@@ -517,41 +573,52 @@
         class Zombie {
             constructor() {
                 this.mesh = new THREE.Group();
-                const head = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.8,0.8), MAT_GREEN); head.position.y=2.8; this.mesh.add(head);
-                const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.4), MAT_BLUE); body.position.y=1.8; this.mesh.add(body);
-                const armL = new THREE.Mesh(new THREE.BoxGeometry(0.4,1.2,0.4), MAT_GREEN); armL.position.set(-0.6,2.2,0.6); armL.rotation.x=-1.5; this.mesh.add(armL);
-                const armR = new THREE.Mesh(new THREE.BoxGeometry(0.4,1.2,0.4), MAT_GREEN); armR.position.set(0.6,2.2,0.6); armR.rotation.x=-1.5; this.mesh.add(armR);
-                const legL = new THREE.Mesh(new THREE.BoxGeometry(0.4,1.2,0.4), MAT_PURPLE); legL.position.set(-0.2,0.6,0); this.mesh.add(legL);
-                const legR = new THREE.Mesh(new THREE.BoxGeometry(0.4,1.2,0.4), MAT_PURPLE); legR.position.set(0.2,0.6,0); this.mesh.add(legR);
-                
+                const head = new THREE.Mesh(GEO_HEAD, MAT_ZOMBIE_GREEN); head.position.y=2.8; this.mesh.add(head);
+                const body = new THREE.Mesh(GEO_BODY, MAT_ZOMBIE_BLUE); body.position.y=1.8; this.mesh.add(body);
+                const armL = new THREE.Mesh(GEO_LIMB, MAT_ZOMBIE_GREEN); armL.position.set(-0.6,2.2,0.6); armL.rotation.x=-1.5; this.mesh.add(armL);
+                const armR = new THREE.Mesh(GEO_LIMB, MAT_ZOMBIE_GREEN); armR.position.set(0.6,2.2,0.6); armR.rotation.x=-1.5; this.mesh.add(armR);
+                const legL = new THREE.Mesh(GEO_LIMB, MAT_ZOMBIE_PURPLE); legL.position.set(-0.2,0.6,0); this.mesh.add(legL);
+                const legR = new THREE.Mesh(GEO_LIMB, MAT_ZOMBIE_PURPLE); legR.position.set(0.2,0.6,0); this.mesh.add(legR);
                 this.respawn(); scene.add(this.mesh);
                 this.hp=3; this.speed=3.5;
+                this.box = new THREE.Box3();
             }
             respawn() {
                 this.hp = 3;
                 const targets = players.filter(p => !p.dead);
                 if (targets.length === 0) return;
                 const t = targets[Math.floor(Math.random()*targets.length)];
-                // Basit spawn: Duvara bakmadan rastgele
-                const angle = Math.random()*Math.PI*2; const dist = 30 + Math.random()*20;
-                this.mesh.position.set(t.mesh.position.x + Math.cos(angle)*dist, 0, t.mesh.position.z + Math.sin(angle)*dist);
+                let safe=false, x, z;
+                while(!safe) {
+                    const angle = Math.random()*Math.PI*2; const dist = 30 + Math.random()*20;
+                    x = t.mesh.position.x + Math.cos(angle)*dist;
+                    z = t.mesh.position.z + Math.sin(angle)*dist;
+                    if(!checkWallCollision(new THREE.Vector3(x, 2, z))) safe = true;
+                }
+                this.mesh.position.set(x, 0, z);
             }
             update(dt) {
+                this.walkTime += dt*10;
+                this.mesh.children[4].rotation.x = Math.sin(this.walkTime)*0.5;
+                this.mesh.children[5].rotation.x = Math.cos(this.walkTime)*0.5;
+
                 let target=null; let minD=Infinity;
-                players.forEach(p => { if(!p.dead) { 
-                    // YÜKSEKLİK FARKINI YOK SAYARAK MESAFE ÖLÇÜMÜ (DÜZELTİLEN KISIM)
-                    const dist2d = Math.sqrt(Math.pow(this.mesh.position.x - p.mesh.position.x, 2) + Math.pow(this.mesh.position.z - p.mesh.position.z, 2));
-                    if(dist2d < minD){minD=dist2d;target=p;} 
-                } });
-                
+                players.forEach(p => { if(!p.dead) { const d=this.mesh.position.distanceTo(p.mesh.position); if(d<minD){minD=d;target=p;} } });
                 if (target) {
                     this.mesh.lookAt(target.mesh.position.x, 0, target.mesh.position.z);
                     const dir = new THREE.Vector3(); this.mesh.getWorldDirection(dir);
                     const moveVec = dir.multiplyScalar(this.speed * dt);
                     let nextPos = this.mesh.position.clone().add(moveVec);
-                    if(!checkWallCollision(nextPos)) this.mesh.position.add(moveVec);
                     
-                    if(minD < 1.5) {
+                    // Zombi Duvar Çarpışma
+                    const zBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(nextPos.x, 1.5, nextPos.z), new THREE.Vector3(1,3,1));
+                    let hitWall = false;
+                    for(let wb of wallBoxes) { if(zBox.intersectsBox(wb)) hitWall = true; }
+                    if(!hitWall) this.mesh.position.add(moveVec);
+
+                    // Saldırı (Hitbox Silindir)
+                    const dist = Math.sqrt(Math.pow(this.mesh.position.x - target.mesh.position.x, 2) + Math.pow(this.mesh.position.z - target.mesh.position.z, 2));
+                    if(dist < 1.5) { // Yükseklik farkını yoksay
                          if(!this.atkCd || this.atkCd<=0) { target.takeDamage(20); this.atkCd=1.0; }
                     }
                     if(this.atkCd>0) this.atkCd-=dt;
@@ -559,32 +626,78 @@
             }
             hit() {
                 this.hp--;
-                this.mesh.children.forEach(c => { if(c.material) c.material.emissive.setHex(0xff0000); setTimeout(()=>c.material.emissive.setHex(0x000000), 100); });
+                this.mesh.children.forEach(c => { if(c.material) { c.material.emissive.setHex(0xff0000); setTimeout(()=>c.material.emissive.setHex(0x000000), 100); } });
                 const dir = new THREE.Vector3(); this.mesh.getWorldDirection(dir);
                 this.mesh.position.add(dir.negate().multiplyScalar(1.0));
             }
         }
 
-        function createWorld() {
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(300,300), new THREE.MeshStandardMaterial({color:COLOR_FLOOR, roughness:0.8}));
+        // --- HARİTALAR ---
+        function createBackrooms() {
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshStandardMaterial({color:0x8F876F, roughness:0.8}));
             floor.rotation.x = -Math.PI/2; floor.name="floor"; scene.add(floor);
-            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(300,300), new THREE.MeshStandardMaterial({color:COLOR_CEILING, roughness:0.8}));
+            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(500,500), new THREE.MeshStandardMaterial({color:0xF2F2F2, roughness:0.8}));
             ceiling.rotation.x = Math.PI/2; ceiling.position.y = 8; scene.add(ceiling);
+
             const boxGeo = new THREE.BoxGeometry(4,8,4);
-            const boxMat = new THREE.MeshStandardMaterial({color:COLOR_WALL}); 
-            for(let i=0; i<150; i++) {
+            const boxMat = new THREE.MeshStandardMaterial({color:0xE5D68E}); 
+            
+            wallBoxes = [];
+            for(let i=0; i<250; i++) {
                 const wall = new THREE.Mesh(boxGeo, boxMat);
-                const a = Math.random()*Math.PI*2; const d = 15 + Math.random()*50;
-                wall.position.set(Math.cos(a)*d, 4, Math.sin(a)*d);
-                scene.add(wall); walls.push(wall);
+                const x = (Math.random()-0.5)*300; const z = (Math.random()-0.5)*300;
+                if(Math.abs(x)<10 && Math.abs(z)<10) continue;
+                wall.position.set(x, 4, z);
+                scene.add(wall); 
+                wallBoxes.push(new THREE.Box3().setFromObject(wall));
             }
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
         }
 
+        function createHospital() {
+            const floor = new THREE.Mesh(new THREE.PlaneGeometry(600,600), new THREE.MeshStandardMaterial({color:0x555555, roughness:0.5}));
+            floor.rotation.x = -Math.PI/2; scene.add(floor);
+            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(600,600), new THREE.MeshStandardMaterial({color:0x222222}));
+            ceiling.rotation.x = Math.PI/2; ceiling.position.y = 8; scene.add(ceiling);
+
+            const wallMat = new THREE.MeshStandardMaterial({color:0xAEC6CF}); 
+            const glassMat = new THREE.MeshBasicMaterial({color: 0x88ccff, transparent: true, opacity: 0.3}); // Şeffaf Cam
+
+            wallBoxes = [];
+            
+            // DIŞ CEPHE (CAM & DUVAR)
+            const outerWalls = [
+                {x:0, z:-100, w:200, d:1}, {x:0, z:100, w:200, d:1},
+                {x:-100, z:0, w:1, d:200}, {x:100, z:0, w:1, d:200}
+            ];
+            outerWalls.forEach(o => {
+                const w = new THREE.Mesh(new THREE.BoxGeometry(o.w, 8, o.d), glassMat);
+                w.position.set(o.x, 4, o.z);
+                scene.add(w); wallBoxes.push(new THREE.Box3().setFromObject(w));
+            });
+
+            // İÇ DUVARLAR (KORİDOR SİSTEMİ)
+            for(let z=-80; z<=80; z+=20) {
+                createRoom(-60, z, wallMat);
+                createRoom(60, z, wallMat);
+            }
+            scene.add(new THREE.HemisphereLight(0xddeeff, 0x0f0e0d, 0.8)); // Ay Işığı
+        }
+
+        function createRoom(cx, cz, mat) {
+            const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 8, 18), mat); w1.position.set(cx-10, 4, cz); scene.add(w1); wallBoxes.push(new THREE.Box3().setFromObject(w1));
+            const w2 = new THREE.Mesh(new THREE.BoxGeometry(20, 8, 1), mat); w2.position.set(cx, 4, cz-9); scene.add(w2); wallBoxes.push(new THREE.Box3().setFromObject(w2));
+            const w3 = new THREE.Mesh(new THREE.BoxGeometry(20, 8, 1), mat); w3.position.set(cx, 4, cz+9); scene.add(w3); wallBoxes.push(new THREE.Box3().setFromObject(w3));
+            const w4 = new THREE.Mesh(new THREE.BoxGeometry(1, 8, 6), mat); w4.position.set(cx+10, 4, cz-6); scene.add(w4); wallBoxes.push(new THREE.Box3().setFromObject(w4));
+            const w5 = new THREE.Mesh(new THREE.BoxGeometry(1, 8, 6), mat); w5.position.set(cx+10, 4, cz+6); scene.add(w5); wallBoxes.push(new THREE.Box3().setFromObject(w5));
+        }
+
         function checkWallCollision(pos) {
-            for(let w of walls) {
-                const dx = pos.x - w.position.x; const dz = pos.z - w.position.z;
-                if(Math.sqrt(dx*dx + dz*dz) < 2.5) return true;
+            // Basit kontrol yerine Box3 kullanıyoruz
+            // Player kutusunu o pozisyonda simüle et
+            const testBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(pos.x, 1.5, pos.z), new THREE.Vector3(1, 3, 1));
+            for(let wb of wallBoxes) {
+                if(testBox.intersectsBox(wb)) return true;
             }
             return false;
         }
@@ -599,44 +712,21 @@
             }
 
             players.forEach(p => p.update(dt));
-            
-            const refP = players.find(p=>!p.dead) || players[0];
-            if(refP) {
-                const f = scene.getObjectByName("floor");
-                if(f) { f.position.x = refP.mesh.position.x; f.position.z = refP.mesh.position.z; }
-                walls.forEach(w => {
-                    if(w.position.distanceTo(refP.mesh.position) > RENDER_DISTANCE) {
-                        const a = Math.random()*Math.PI*2; const d = 15 + Math.random()*RENDER_DISTANCE;
-                        w.position.set(refP.mesh.position.x + Math.cos(a)*d, 4, refP.mesh.position.z + Math.sin(a)*d);
-                    }
-                });
-                zombies.forEach(z => { 
-                    z.update(dt); 
-                    if(z.mesh.position.distanceTo(refP.mesh.position) > RENDER_DISTANCE + 10) z.respawn(); 
-                    if(z.hp <= 0) { scene.remove(z.mesh); zombies.splice(zombies.indexOf(z), 1); }
-                });
-            }
+            zombies.forEach((z, i) => { z.update(dt); if(z.hp <= 0) { scene.remove(z.mesh); zombies.splice(i, 1); } });
 
-            // Mermi Çarpışma
             bullets.forEach((b,i) => {
                 b.position.add(b.userData.vel.clone().multiplyScalar(dt)); b.userData.life -= dt;
                 let hit = false;
                 for(let z of zombies) { 
-                    // DÜZELTİLMİŞ ÇARPIŞMA: Yatay Mesafe + Yükseklik Aralığı
-                    const dx = b.position.x - z.mesh.position.x;
-                    const dz = b.position.z - z.mesh.position.z;
-                    const dist2d = Math.sqrt(dx*dx + dz*dz);
-                    
-                    // Zombinin yüksekliği 0 ile 3 arası
-                    if(dist2d < 1.0 && b.position.y > 0 && b.position.y < 3) { 
-                        z.hit(); hit = true; break; 
-                    } 
+                    const dist = b.position.distanceTo(z.mesh.position);
+                    if(dist < 2.0 && Math.abs(b.position.y - 1.5) < 2.0) { z.hit(); hit = true; break; } 
                 }
                 if(hit || b.userData.life <= 0) { scene.remove(b); bullets.splice(i,1); }
             });
 
             renderer.clear();
             const w = window.innerWidth, h = window.innerHeight;
+
             if (selectedMode === 1) {
                 if(!players[0].dead) { 
                     renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(false); 
