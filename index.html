@@ -3,953 +3,539 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: Infinite & Gamepad Fix</title>
+    <title>Backrooms: MCPE Survival (FIXED)</title>
     <style>
-        body { 
-            margin: 0; overflow: hidden; background: #000; 
-            font-family: 'Courier New', Courier, monospace; 
-            user-select: none; -webkit-user-select: none; 
-            touch-action: none; 
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
+        
+        /* UI */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+
+        /* JOYSTICK (SOL) */
+        #joystick-zone {
+            position: absolute; bottom: 50px; left: 50px;
+            width: 140px; height: 140px;
+            background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%; pointer-events: auto; touch-action: none;
+        }
+        #joystick-knob {
+            position: absolute; top: 50%; left: 50%; width: 60px; height: 60px;
+            background: rgba(255, 200, 0, 0.6); border-radius: 50%;
+            transform: translate(-50%, -50%); pointer-events: none;
+            box-shadow: 0 0 15px rgba(255, 200, 0, 0.4);
+        }
+
+        /* BUTTONS (SAĞ) */
+        #touch-right-zone {
+            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
+            pointer-events: auto; z-index: 20; touch-action: none;
         }
         
-        canvas { display: block; }
-
-        /* KAN EFEKTİ */
-        #damage-flash {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 50%, rgba(200,0,0,0.9) 100%);
-            opacity: 0; pointer-events: none; transition: opacity 0.1s;
-            z-index: 45;
+        #btn-jump {
+            position: absolute; bottom: 60px; right: 40px;
+            width: 90px; height: 90px; border-radius: 50%;
+            background: rgba(200, 200, 200, 0.3); border: 2px solid rgba(255,255,255,0.4);
+            pointer-events: auto; z-index: 30;
         }
+        #btn-jump:active { background: rgba(255,255,255,0.6); transform: scale(0.95); }
 
-        #fs-btn {
-            position: absolute; top: 10px; left: 10px; z-index: 1000;
-            background: rgba(0, 0, 0, 0.5); color: #fff; border: 2px solid #fff;
-            padding: 8px 12px; cursor: pointer; font-weight: bold; pointer-events: auto;
-            font-family: sans-serif;
+        /* SALDIRI BUTONU */
+        #btn-attack {
+            position: absolute; bottom: 60px; right: 150px; 
+            width: 70px; height: 70px; border-radius: 50%;
+            background: rgba(255, 50, 50, 0.4); border: 2px solid rgba(255,200,200,0.4);
+            pointer-events: auto; z-index: 30;
+            display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold; font-size: 12px;
         }
+        #btn-attack:active { background: rgba(255, 0, 0, 0.6); transform: scale(0.95); }
 
-        /* MENÜLER */
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; 
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 50; color: #ddd;
-            transition: background 0.5s;
+        /* MENU */
+        #menu {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            background: #111; color: #ffea00; z-index: 1000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            pointer-events: auto;
         }
+        .btn {
+            padding: 20px 40px; font-size: 20px; background: #333; color: white;
+            border: 2px solid #555; margin: 10px; border-radius: 10px; cursor: pointer; width: 80%; max-width: 300px;
+        }
+        .active-slot { border-color: #0f0; background: #003300; }
         
-        .screen.backrooms-bg { background: #C2B280; color: #433; } /* Resimdeki Sarı Ton */
-        .screen.hospital-bg { background: #1a2a33; color: #a0c0d0; }
-
-        h1 { font-size: 50px; margin: 0 0 20px 0; letter-spacing: 5px; text-align: center; text-transform: uppercase; text-shadow: 0 0 10px currentColor; }
-        
-        .btn, select {
-            padding: 20px 50px; font-size: 20px; background: rgba(0,0,0,0.6); color: inherit;
-            border: 3px solid currentColor; 
-            cursor: pointer; margin: 10px; min-width: 300px; font-family: 'Courier New', monospace; font-weight: bold;
-            transition: 0.2s; display: block; text-align: center;
-        }
-        .btn.selected, select.selected, .btn:hover { 
-            background: #ff0 !important; color: #000 !important; border-color: #fff !important; transform: scale(1.1);
-        }
-
-        #setup-panel {
-            background: rgba(0,0,0,0.8); border: 2px solid currentColor; padding: 30px;
-            display: flex; flex-direction: column; gap: 20px; width: 90%; max-width: 600px;
-        }
-        .player-row { display: flex; flex-direction: column; align-items: center; margin-bottom: 10px; }
-        
-        /* HUD */
-        #ui-layer { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .player-screen { position: absolute; top: 0; height: 100%; box-sizing: border-box; overflow: hidden; }
-        #p1-screen { left: 0; width: 100%; }
-        #p2-screen { left: 50%; width: 50%; display: none; border-left: 2px solid #fff; }
-
-        .mc-crosshair {
-            position: absolute; top: 50%; left: 50%; width: 20px; height: 20px;
-            transform: translate(-50%, -50%);
-        }
-        .mc-crosshair::before, .mc-crosshair::after {
-            content: ''; position: absolute; background: rgba(255, 255, 255, 0.8); mix-blend-mode: difference; 
-        }
-        .mc-crosshair::before { top: 9px; left: 0; width: 20px; height: 2px; } 
-        .mc-crosshair::after { top: 0; left: 9px; width: 2px; height: 20px; }
-
-        .hud-text {
-            position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%);
-            font-size: 24px; font-weight: bold; color: #f00; text-shadow: 2px 2px 0 #000;
-        }
-
-        /* TOUCH CONTROLS */
-        .touch-layer { display: none; position: absolute; top: 0; height: 100%; width: 100%; pointer-events: none; z-index: 40; }
-        #p1-touch { left: 0; width: 100%; }
-        #p2-touch { left: 50%; width: 50%; }
-
-        .zone-move { position: absolute; bottom: 0; left: 0; width: 40%; height: 60%; pointer-events: auto; }
-        .zone-look { position: absolute; bottom: 0; right: 0; width: 60%; height: 100%; pointer-events: auto; }
-        
-        .joystick-base {
-            position: absolute; bottom: 50px; left: 50px; width: 120px; height: 120px; border-radius: 50%;
-            background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.3); pointer-events: none; 
-        }
-        .joystick-stick {
-            position: absolute; top: 50%; left: 50%; width: 50px; height: 50px; border-radius: 50%;
-            background: rgba(255,255,255,0.5); transform: translate(-50%, -50%); pointer-events: none;
-        }
-
-        .touch-btn {
-            position: absolute; width: 70px; height: 70px; border-radius: 10px;
-            background: rgba(200, 50, 50, 0.4); border: 2px solid #fff;
-            color: white; font-weight: bold; display: flex; align-items: center; justify-content: center;
-            pointer-events: auto; z-index: 60; font-size: 14px;
-        }
-        .btn-shoot { bottom: 80px; right: 20px; }
-        .btn-jump { bottom: 160px; right: 40px; background: rgba(100, 100, 100, 0.4); }
-
-        .local-death-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(50, 0, 0, 0.9); display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            pointer-events: auto; z-index: 70; color: white;
-        }
-        
-        .gamepad-hint {
-            color: #0f0; font-size: 14px; text-align: center; margin-top: 10px; animation: pulse 2s infinite;
-        }
-        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
-        #gp-status { font-size: 12px; color: #aaa; margin-top: 5px; }
+        #split-line { position: absolute; left: 50%; top: 0; width: 3px; height: 100%; background: #000; display: none; z-index: 5; transform: translateX(-50%); }
     </style>
 </head>
 <body>
 
-    <div id="damage-flash"></div>
-    <button id="fs-btn" onclick="toggleFullScreen()">TAM EKRAN</button>
+    <div id="split-line"></div>
 
-    <!-- 1. HARİTA SEÇİMİ -->
-    <div id="map-screen" class="screen backrooms-bg active-screen">
-        <h1>HARİTA SEÇ</h1>
-        <button class="btn selected" onclick="selectMap(1)">THE BACKROOMS (SONSUZ)</button>
-        <button class="btn" onclick="selectMap(2)">GERÇEK HASTANE</button>
-        <div class="gamepad-hint">GAMEPAD: Analog ile Seç, A ile Onayla</div>
+    <div id="touch-ui" style="display:none;">
+        <div id="joystick-zone"><div id="joystick-knob"></div></div>
+        <div id="touch-right-zone"></div>
+        <div id="btn-attack">SALDIR</div>
+        <div id="btn-jump"></div>
     </div>
 
-    <!-- 2. MOD SEÇİMİ -->
-    <div id="menu-screen" class="screen" style="display:none;">
-        <h1 id="map-title">MOD SEÇ</h1>
-        <button class="btn selected" onclick="goToSetup(1)">TEK OYUNCU</button>
-        <button class="btn" onclick="goToSetup(2)">2 OYUNCU</button>
-    </div>
-
-    <!-- 3. SETUP -->
-    <div id="setup-screen" class="screen" style="display:none;">
-        <h2>KONTROLLER</h2>
-        <div id="setup-panel">
-            <div class="player-row">
-                <label>OYUNCU 1</label>
-                <select id="p1-input" class="btn selected">
-                    <option value="touch">Dokunmatik</option>
-                    <option value="keyboard">Klavye & Mouse</option>
-                </select>
-            </div>
-            <div class="player-row" id="p2-row">
-                <label>OYUNCU 2</label>
-                <select id="p2-input" class="btn">
-                    <option value="keyboard">Klavye & Mouse</option>
-                    <option value="touch">Dokunmatik</option>
-                </select>
-            </div>
-            <div id="gp-status">Gamepad Aranıyor... (Bir tuşa basın)</div>
-        </div>
-        <button class="btn" onclick="startGame()">BAŞLAT</button>
-    </div>
-
-    <!-- UI -->
-    <div id="ui-layer">
-        <!-- P1 -->
-        <div id="p1-screen" class="player-screen">
-            <div class="mc-crosshair"></div>
-            <div class="hud-text" id="hp1">❤❤❤❤❤</div>
-            <div id="p1-death" class="local-death-screen">
-                <h1>ÖLDÜN!</h1>
-                <button class="btn selected" onclick="respawnPlayer(0)">YENİDEN DOĞ (A)</button>
-            </div>
-        </div>
-        <div id="p1-touch" class="touch-layer">
-            <div id="p1-zone-move" class="zone-move"></div><div id="p1-zone-look" class="zone-look"></div>
-            <div class="joystick-base" id="p1-joy-bg"><div id="p1-joy-head" class="joystick-stick"></div></div>
-            <div id="p1-btn-shoot" class="touch-btn btn-shoot">ATK</div>
-            <div id="p1-btn-jump" class="touch-btn btn-jump">JMP</div>
+    <div id="menu">
+        <h1>BACKROOMS MCPE</h1>
+        <div id="p1-slot" class="btn">OYUNCU 1: Bekleniyor...</div>
+        <div id="p2-slot" class="btn" style="display:none;">OYUNCU 2: Bekleniyor...</div>
+        
+        <div id="controls-hint" style="margin:20px; color:#aaa; text-align:center;">
+            Mod Seçimi:<br>
+            <button onclick="setMode(1)" style="padding:10px;">TEK KİŞİLİK</button>
+            <button onclick="setMode(2)" style="padding:10px;">ÇİFT KİŞİLİK</button>
         </div>
 
-        <!-- P2 -->
-        <div id="p2-screen" class="player-screen">
-            <div class="mc-crosshair"></div>
-            <div class="hud-text" id="hp2">❤❤❤❤❤</div>
-            <div id="p2-death" class="local-death-screen">
-                <h1>ÖLDÜN!</h1>
-                <button class="btn selected" onclick="respawnPlayer(1)">YENİDEN DOĞ (A)</button>
-            </div>
-        </div>
-        <div id="p2-touch" class="touch-layer">
-            <div id="p2-zone-move" class="zone-move"></div><div id="p2-zone-look" class="zone-look"></div>
-            <div class="joystick-base" id="p2-joy-bg"><div id="p2-joy-head" class="joystick-stick"></div></div>
-            <div id="p2-btn-shoot" class="touch-btn btn-shoot">ATK</div>
-            <div id="p2-btn-jump" class="touch-btn btn-jump">JMP</div>
-        </div>
+        <button id="btn-start" style="display:none; background:#d4d400; color:black; font-weight:bold; padding:20px 50px;" onclick="startGame()">BAŞLAT</button>
+        
+        <p style="font-size:12px; color:#666;">Cihazı atamak için: Klavye tuşuna bas, Gamepad'e bas veya aşağıdaki butonu kullan.</p>
+        <button id="btn-touch" onclick="assignTouch()" style="background:#0055aa; color:white; padding:10px;">DOKUNMATİK KONTROLÜ SEÇ</button>
     </div>
 
     <script type="module">
-        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.module.js';
+        import * as THREE from 'https://unpkg.com/three@0.126.0/build/three.module.js';
 
-        // --- AYARLAR ---
-        const RENDER_DISTANCE = 80; 
-        const MAX_MONSTERS = 10; // Sonsuz ama kontrollü sayı
-        const MOVE_SPEED = 4.5; 
-        const PLAYER_RADIUS = 0.6;
-        const SPAWN_DELAY_MS = 2000;
-        const START_DELAY_MS = 4000;
-        const COLLISION_DISTANCE = 2.0;
-        const GAMEPAD_SENSITIVITY = 2.0;
-        const BULLET_HIT_RADIUS = 1.5;
-        const FLOOR_HEIGHT = 15;
-        const COLLISION_BOX_SIZE = 2.5; 
+        // --- SİSTEM ---
+        const Sys = { mode: 1, players: [], ready: 0, active: false, zombies: [] };
+        const InputMap = { p1: null, p2: null };
 
-        // --- DOKU OLUŞTURMA (Texture Generator - Resimdeki gibi) ---
-        function createTexture(type) {
-            const canvas = document.createElement('canvas');
-            canvas.width = 512; canvas.height = 512; 
-            const ctx = canvas.getContext('2d');
-            
-            if (type === 'wall') {
-                // RESİMDEKİ DUVAR KAĞIDI
-                ctx.fillStyle = '#C2B280'; ctx.fillRect(0, 0, 512, 512);
-                // Kir ve Desen
-                for(let i=0; i<3000; i++) {
-                    ctx.fillStyle = Math.random()>0.5 ? '#b0a060' : '#d4c490';
-                    ctx.fillRect(Math.random()*512, Math.random()*512, 4, 4);
-                }
-                // Dikey çizgiler (Duvar kağıdı deseni)
-                ctx.fillStyle = 'rgba(100, 90, 0, 0.08)';
-                for(let i=0; i<512; i+=64) ctx.fillRect(i, 0, 3, 512); 
-            } 
-            else if (type === 'floor') {
-                // RESİMDEKİ HALI
-                ctx.fillStyle = '#8B8059'; ctx.fillRect(0, 0, 512, 512);
-                for(let i=0; i<10000; i++) {
-                    ctx.fillStyle = Math.random()>0.5 ? '#7a704b' : '#9c9065';
-                    ctx.fillRect(Math.random()*512, Math.random()*512, 2, 2);
-                }
-            }
-            else if (type === 'ceiling') {
-                // OFİS TAVANI
-                ctx.fillStyle = '#E0E0E0'; ctx.fillRect(0, 0, 512, 512);
-                ctx.strokeStyle = '#aaa'; ctx.lineWidth = 4; ctx.strokeRect(0, 0, 512, 512);
-                ctx.fillStyle = '#fff'; ctx.fillRect(40, 40, 432, 432);
-            }
-            const tex = new THREE.CanvasTexture(canvas);
-            tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping;
-            return tex;
-        }
-        
-        const TEX_WALL = createTexture('wall');
-        const TEX_FLOOR = createTexture('floor');
-        const TEX_CEILING = createTexture('ceiling');
-        TEX_FLOOR.repeat.set(100, 100);
-        TEX_CEILING.repeat.set(50, 50);
-
-        // GLOBAL ÇARPIŞMA
-        window.checkWallCollision = function(pos) {
-            const testBox = new THREE.Box3().setFromCenterAndSize(new THREE.Vector3(pos.x, 1.5, pos.z), new THREE.Vector3(COLLISION_BOX_SIZE, 3, COLLISION_BOX_SIZE));
-            for(let wb of wallBoxes) { if(testBox.intersectsBox(wb)) return true; }
-            return false;
-        }
-
-        let scene, renderer;
-        let players = [];
-        let bullets = [];
-        let zombies = [];
-        let wallBoxes = []; 
-        let rampBoxes = [];
-        
-        let lastTime = 0;
-        let selectedMode = 1;
-        let currentMap = 1; 
-        const keys = {};
-        let gameStartTime = 0;
-        let lastSpawnTime = 0;
-
-        const touchStates = [
-            { moveId: null, lookId: null, startX: 0, startY: 0, moveX: 0, moveY: 0, lastLookX: 0, lastLookY: 0, lookDeltaX: 0, lookDeltaY: 0, shoot: false, jump: false },
-            { moveId: null, lookId: null, startX: 0, startY: 0, moveX: 0, moveY: 0, lastLookX: 0, lastLookY: 0, lookDeltaX: 0, lookDeltaY: 0, shoot: false, jump: false }
-        ];
-
-        // --- MENÜ NAVİGASYON SİSTEMİ (GAMEPAD - DÜZELTİLDİ) ---
-        let lastAxisTime = 0;
-        function handleMenuNavigation() {
-            const activeScreen = document.querySelector('.screen[style*="display: flex"]');
-            const deathScreenP1 = document.getElementById('p1-death');
-            const deathScreenP2 = document.getElementById('p2-death');
-            
-            const gp = navigator.getGamepads()[0];
-            if(!gp) return;
-
-            if(deathScreenP1 && deathScreenP1.style.display === 'flex' && gp.buttons[0].pressed) { window.respawnPlayer(0); return; }
-            if(deathScreenP2 && deathScreenP2.style.display === 'flex' && gp.buttons[0].pressed) { window.respawnPlayer(1); return; }
-
-            if (!activeScreen) return;
-            const elements = Array.from(activeScreen.querySelectorAll('.btn, select'));
-            if (elements.length === 0) return;
-            let idx = elements.findIndex(e => e.classList.contains('selected'));
-            if (idx === -1) { idx = 0; elements[0].classList.add('selected'); }
-
-            const now = Date.now();
-            if (now - lastAxisTime < 200) return; 
-
-            if (gp.axes[1] > 0.5) {
-                elements[idx].classList.remove('selected'); idx = (idx + 1) % elements.length; elements[idx].classList.add('selected'); lastAxisTime = now;
-            } else if (gp.axes[1] < -0.5) {
-                elements[idx].classList.remove('selected'); idx = (idx - 1 + elements.length) % elements.length; elements[idx].classList.add('selected'); lastAxisTime = now;
-            }
-
-            if (gp.buttons[0].pressed) {
-                const el = elements[idx];
-                if (el.tagName === 'BUTTON') el.click();
-                else if (el.tagName === 'SELECT') {
-                    const opts = el.options;
-                    el.selectedIndex = (el.selectedIndex + 1) % el.options.length;
-                    const evt = new Event('change'); el.dispatchEvent(evt);
-                }
-                lastAxisTime = now + 300;
-            }
-        }
-        setInterval(handleMenuNavigation, 16);
-
-        // CACHE
-        const MAT_ZOMBIE_GREEN = new THREE.MeshStandardMaterial({ color: 0x228B22 });
-        const MAT_ZOMBIE_BLUE = new THREE.MeshStandardMaterial({ color: 0x00AAAA });
-        const MAT_ZOMBIE_PURPLE = new THREE.MeshStandardMaterial({ color: 0x4400AA });
-        const GEO_HEAD = new THREE.BoxGeometry(0.8, 0.8, 0.8);
-        const GEO_BODY = new THREE.BoxGeometry(0.8, 1.2, 0.4);
-        const GEO_LIMB = new THREE.BoxGeometry(0.4, 1.2, 0.4);
-        const MAT_BULLET = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-        const GEO_BULLET = new THREE.BoxGeometry(0.2, 0.2, 0.2);
-
-        window.selectMap = function(mapId) {
-            currentMap = mapId;
-            document.getElementById('map-screen').style.display = 'none';
-            document.getElementById('menu-screen').style.display = 'flex';
-            const screens = document.querySelectorAll('.screen');
-            screens.forEach(s => {
-                s.className = 'screen ' + (mapId === 1 ? 'backrooms-bg' : 'hospital-bg');
-                if(s.style.display === 'flex') s.classList.add('active-screen');
-            });
-            document.querySelectorAll('.btn').forEach(b => b.classList.remove('selected'));
-            document.querySelector('#menu-screen .btn').classList.add('selected');
+        // --- FİZİK AYARLARI ---
+        const PHYS = {
+            speed: 12.5,
+            gravity: 80.0,
+            jumpForce: 25.0,
+            lookSpeed: 0.004,
+            eyeHeight: 9.0 // Göz hizası sabiti
         };
 
-        window.toggleFullScreen = function() {
-            if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{});
-            else if (document.exitFullscreen) document.exitFullscreen();
+        // --- TEXTURE ---
+        const tl = new THREE.TextureLoader();
+        const tex = (u) => { const t = tl.load(u); t.magFilter = THREE.NearestFilter; return t; };
+        const mat = {
+            wall: tex('./photos/brick.png'),
+            floor: tex('./photos/cobblestone.png'),
+            ceil: tex('./photos/acacia_trapdoor.png')
         };
 
-        window.goToSetup = function(mode) {
-            selectedMode = mode;
-            document.getElementById('menu-screen').style.display = 'none';
-            document.getElementById('setup-screen').style.display = 'flex';
-            if(mode === 1) document.getElementById('p2-row').style.display = 'none';
-            else document.getElementById('p2-row').style.display = 'flex';
-            
-            document.querySelectorAll('.selected').forEach(el=>el.classList.remove('selected'));
-            document.getElementById('p1-input').classList.add('selected');
-            updateControllerList();
-            setInterval(updateControllerList, 1000);
-        };
+        // --- KARAKTER OLUŞTURUCU (DÜZELTİLDİ) ---
+        // Model artık Y=0 (Zemin) referans alınarak oluşturuluyor.
+        function createHumanoid(isZombie) {
+            const group = new THREE.Group();
 
-        function updateControllerList() {
+            const cSkin = isZombie ? 0x3d7a3d : 0xffccaa;
+            const cShirt = isZombie ? 0x3d7a3d : 0x00aaaa;
+            const cPants = 0x0000aa;
+
+            const matSkin = new THREE.MeshLambertMaterial({ color: cSkin });
+            const matShirt = new THREE.MeshLambertMaterial({ color: cShirt });
+            const matPants = new THREE.MeshLambertMaterial({ color: cPants });
+
+            // Bacaklar (Yükseklik: 3.5. Merkez Y: 1.75)
+            const legGeo = new THREE.BoxGeometry(1.1, 3.5, 1.1);
+            const rLeg = new THREE.Mesh(legGeo, matPants);
+            rLeg.position.set(0.7, 1.75, 0);
+            group.add(rLeg);
+
+            const lLeg = new THREE.Mesh(legGeo, matPants);
+            lLeg.position.set(-0.7, 1.75, 0);
+            group.add(lLeg);
+
+            // Gövde (Yükseklik: 3.5. Başlangıç Y: 3.5. Merkez Y: 5.25)
+            const bodyGeo = new THREE.BoxGeometry(2.6, 3.5, 1.3);
+            const body = new THREE.Mesh(bodyGeo, matShirt);
+            body.position.y = 5.25;
+            group.add(body);
+
+            // Kollar (Merkez Y: 5.25)
+            const armGeo = new THREE.BoxGeometry(1, 3.5, 1);
+            const rArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin);
+            rArm.position.set(1.9, 5.25, 0);
+            if(isZombie) { rArm.rotation.x = -Math.PI/2; rArm.position.y += 1.2; rArm.position.z += 1.2; }
+            group.add(rArm);
+
+            const lArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin);
+            lArm.position.set(-1.9, 5.25, 0);
+            if(isZombie) { lArm.rotation.x = -Math.PI/2; lArm.position.y += 1.2; lArm.position.z += 1.2; }
+            group.add(lArm);
+
+            // Kafa (Yükseklik: 2.5. Başlangıç Y: 7.0. Merkez Y: 8.25)
+            const headGeo = new THREE.BoxGeometry(2.5, 2.5, 2.5);
+            const head = new THREE.Mesh(headGeo, matSkin);
+            head.position.y = 8.25;
+            group.add(head);
+
+            return group;
+        }
+
+        // --- MENÜ ---
+        window.setMode = (m) => {
+            Sys.mode = m;
+            if(m===2) document.getElementById('p2-slot').style.display = 'block';
+            document.getElementById('controls-hint').style.display = 'none';
+            checkInput();
+        };
+        window.assignTouch = () => assign('touch', 0);
+        function checkInput() {
+            if(Sys.active) return;
             const gps = navigator.getGamepads ? navigator.getGamepads() : [];
-            const selects = [document.getElementById('p1-input'), document.getElementById('p2-input')];
-            const status = document.getElementById('gp-status');
-            let found = false;
-            selects.forEach(sel => {
-                const currentVal = sel.value;
-                let html = `<option value="touch">Dokunmatik Ekran</option><option value="keyboard">Klavye & Mouse</option>`;
-                for(let i=0; i<gps.length; i++) {
-                    if(gps[i]) {
-                        html += `<option value="gamepad_${i}">🎮 Gamepad ${i+1}</option>`;
-                        found = true;
-                    }
-                }
-                if(sel.innerHTML !== html) {
-                    sel.innerHTML = html;
-                    if(sel.id === 'p1-input' && found && currentVal === 'touch') sel.value = "gamepad_0";
-                    else sel.value = currentVal || "touch";
-                }
-            });
-            if(status) {
-                if(found) { status.innerText = "✅ Gamepad Algılandı!"; status.style.color = "#0f0"; }
-                else { status.innerText = "Gamepad Aranıyor... (Bir tuşa basın)"; status.style.color = "#aaa"; }
-            }
+            for(let i=0; i<gps.length; i++) if(gps[i] && gps[i].buttons.some(b=>b.pressed)) assign('gamepad', i);
+            requestAnimationFrame(checkInput);
         }
-        window.addEventListener("gamepadconnected", updateControllerList);
+        window.addEventListener('keydown', e => {
+            if(['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0);
+        });
+        function assign(type, idx) {
+            if(Sys.ready >= Sys.mode) return;
+            if((InputMap.p1?.type===type && InputMap.p1.index===idx) || (InputMap.p2?.type===type && InputMap.p2.index===idx)) return;
+            const pid = InputMap.p1 ? 2 : 1;
+            InputMap['p'+pid] = { type, index: idx };
+            const slot = document.getElementById('p'+pid+'-slot');
+            slot.innerText = `OYUNCU ${pid}: ${type.toUpperCase()}`;
+            slot.classList.add('active-slot');
+            if(type==='touch') document.getElementById('btn-touch').style.display='none';
+            Sys.ready++;
+            if(Sys.ready === Sys.mode) document.getElementById('btn-start').style.display='block';
+        }
 
-        window.startGame = function() {
-            document.getElementById('setup-screen').style.display = 'none';
-            document.getElementById('ui-layer').style.display = 'block';
-            const p1Type = document.getElementById('p1-input').value;
-            const p2Type = document.getElementById('p2-input').value;
+        // --- TOUCH ---
+        const TouchData = { moveX: 0, moveZ: 0, lookX: 0, lookY: 0, jump: false, attack: false, joyID: null, lookID: null };
+        function initTouch() {
+            const ui = document.getElementById('touch-ui');
+            const joyZone = document.getElementById('joystick-zone');
+            const joyKnob = document.getElementById('joystick-knob');
+            const lookZone = document.getElementById('touch-right-zone');
+            const jumpBtn = document.getElementById('btn-jump');
+            const attackBtn = document.getElementById('btn-attack');
 
-            if (selectedMode === 2) {
-                document.getElementById('p1-screen').style.width = '50%';
-                document.getElementById('p2-screen').style.display = 'block';
-                document.getElementById('p1-touch').style.width = '50%';
-                document.getElementById('p2-touch').style.width = '50%';
-                document.getElementById('p2-touch').style.left = '50%';
-            } else {
-                document.getElementById('p1-touch').style.width = '100%';
+            ui.style.display = 'block';
+            if(Sys.mode === 2) {
+                const p1Touch = InputMap.p1?.type === 'touch';
+                ui.style.left = p1Touch ? '0' : '50%';
+                ui.style.width = '50%';
             }
 
-            if (p1Type === 'touch') {
-                document.getElementById('p1-touch').style.display = 'block';
-                initTouchControls(0, 'p1');
-            }
-            if (selectedMode === 2 && p2Type === 'touch') {
-                document.getElementById('p2-touch').style.display = 'block';
-                initTouchControls(1, 'p2');
-            }
-
-            initThreeJS(p1Type, p2Type);
-            gameStartTime = performance.now();
-            toggleFullScreen();
-
-            if (p1Type === 'keyboard' || (selectedMode === 2 && p2Type === 'keyboard')) {
-                document.body.requestPointerLock();
-                document.addEventListener('click', () => {
-                     if(players.some(p => !p.dead && p.inputType === 'keyboard'))
-                        document.body.requestPointerLock();
-                });
-            }
-        };
-
-        window.respawnPlayer = function(id) {
-            const p = players[id];
-            if(p) {
-                p.hp = 100; p.dead = false; p.mesh.rotation.z = 0;
-                p.mesh.position.set(id*5, 1.6, 0); 
-                document.getElementById('p'+(id+1)+'-death').style.display = 'none';
-                p.updateHearts();
-                
-                if(p.inputType === 'touch') document.getElementById('p'+(id+1)+'-touch').style.display = 'block';
-                
-                zombies.forEach(z => scene.remove(z.mesh));
-                zombies = [];
-                gameStartTime = performance.now(); 
-            }
-        };
-
-        function initTouchControls(pid, prefix) {
-            const moveZone = document.getElementById(prefix + '-zone-move');
-            const lookZone = document.getElementById(prefix + '-zone-look');
-            const joyBg = document.getElementById(prefix + '-joy-bg');
-            const joyHead = document.getElementById(prefix + '-joy-head');
-            const bShoot = document.getElementById(prefix + '-btn-shoot');
-            const bJump = document.getElementById(prefix + '-btn-jump');
-            const state = touchStates[pid];
-            let stickOrigin = {x:0, y:0};
-
-            // SABİT JOYSTICK
-            let joyRect = joyBg.getBoundingClientRect();
-            let joyCenterX = joyRect.left + joyRect.width/2;
-            let joyCenterY = joyRect.top + joyRect.height/2;
-            const JOYSTICK_RADIUS = 50;
-
-            window.addEventListener('resize', () => {
-                joyRect = joyBg.getBoundingClientRect();
-                joyCenterX = joyRect.left + joyRect.width/2;
-                joyCenterY = joyRect.top + joyRect.height/2;
-            });
-
-            moveZone.addEventListener('touchstart', e => {
-                e.preventDefault(); if (state.moveId !== null) return;
+            let joyStart = {x:0, y:0};
+            joyZone.addEventListener('touchstart', e => {
+                e.preventDefault();
                 const t = e.changedTouches[0];
-                state.moveId = t.identifier;
-                updateJoy(t);
-            }, {passive: false});
-
-            moveZone.addEventListener('touchmove', e => {
+                TouchData.joyID = t.identifier;
+                joyStart.x = t.clientX; joyStart.y = t.clientY;
+            });
+            joyZone.addEventListener('touchmove', e => {
                 e.preventDefault();
-                for (let i=0; i<e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === state.moveId) updateJoy(e.changedTouches[i]);
-                }
-            }, {passive: false});
-
-            function updateJoy(t) {
-                let dx = t.clientX - joyCenterX;
-                let dy = t.clientY - joyCenterY;
-                const dist = Math.min(Math.sqrt(dx*dx + dy*dy), JOYSTICK_RADIUS);
-                const angle = Math.atan2(dy, dx);
-                const lx = Math.cos(angle) * dist; const ly = Math.sin(angle) * dist;
-                joyHead.style.transform = `translate(calc(-50% + ${lx}px), calc(-50% + ${ly}px))`;
-                state.moveX = lx / JOYSTICK_RADIUS; state.moveY = ly / JOYSTICK_RADIUS;
-            }
-
-            const endMove = (e) => {
-                e.preventDefault();
-                for (let i=0; i<e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === state.moveId) {
-                        state.moveId = null; state.moveX = 0; state.moveY = 0;
-                        joyHead.style.transform = `translate(-50%, -50%)`;
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    if(t.identifier === TouchData.joyID) {
+                        let dx = t.clientX - joyStart.x;
+                        let dy = t.clientY - joyStart.y;
+                        const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50);
+                        const angle = Math.atan2(dy, dx);
+                        const jx = Math.cos(angle) * dist;
+                        const jy = Math.sin(angle) * dist;
+                        joyKnob.style.transform = `translate(calc(-50% + ${jx}px), calc(-50% + ${jy}px))`;
+                        TouchData.moveX = jx / 50; TouchData.moveZ = jy / 50;
                     }
                 }
-            };
-            moveZone.addEventListener('touchend', endMove);
-            moveZone.addEventListener('touchcancel', endMove);
+            });
+            joyZone.addEventListener('touchend', e => {
+                e.preventDefault();
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    if(e.changedTouches[i].identifier === TouchData.joyID) {
+                        TouchData.joyID = null;
+                        TouchData.moveX = 0; TouchData.moveZ = 0;
+                        joyKnob.style.transform = `translate(-50%, -50%)`;
+                    }
+                }
+            });
 
+            let lookStart = {x:0, y:0};
             lookZone.addEventListener('touchstart', e => {
-                e.preventDefault(); if (state.lookId !== null) return;
-                const t = e.changedTouches[0];
-                state.lookId = t.identifier;
-                state.lastLookX = t.clientX; state.lastLookY = t.clientY;
-            }, {passive: false});
-
+                e.preventDefault();
+                if(e.target !== jumpBtn && e.target !== attackBtn) {
+                    const t = e.changedTouches[0];
+                    TouchData.lookID = t.identifier;
+                    lookStart.x = t.clientX; lookStart.y = t.clientY;
+                }
+            });
             lookZone.addEventListener('touchmove', e => {
                 e.preventDefault();
-                for (let i=0; i<e.changedTouches.length; i++) {
-                    const touch = e.changedTouches[i];
-                    if (touch.identifier === state.lookId) {
-                        state.lookDeltaX += t.clientX - state.lastLookX;
-                        state.lookDeltaY += t.clientY - state.lastLookY;
-                        state.lastLookX = t.clientX; state.lastLookY = t.clientY;
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    const t = e.changedTouches[i];
+                    if(t.identifier === TouchData.lookID) {
+                        TouchData.lookX = (t.clientX - lookStart.x);
+                        TouchData.lookY = (t.clientY - lookStart.y);
+                        lookStart.x = t.clientX; lookStart.y = t.clientY;
                     }
                 }
-            }, {passive: false});
-
-            const endLook = (e) => {
-                e.preventDefault();
-                for (let i=0; i<e.changedTouches.length; i++) {
-                    if (e.changedTouches[i].identifier === state.lookId) state.lookId = null;
+            });
+            lookZone.addEventListener('touchend', e => {
+                for(let i=0; i<e.changedTouches.length; i++) {
+                    if(e.changedTouches[i].identifier === TouchData.lookID) TouchData.lookID = null;
                 }
-            };
-            lookZone.addEventListener('touchend', endLook);
+            });
 
-            bShoot.addEventListener('touchstart', e=>{ e.preventDefault(); state.shoot=true; });
-            bShoot.addEventListener('touchend', e=>{ e.preventDefault(); state.shoot=false; });
-            bJump.addEventListener('touchstart', e=>{ e.preventDefault(); state.jump=true; });
-            bJump.addEventListener('touchend', e=>{ e.preventDefault(); state.jump=false; });
+            jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.jump = true; });
+            jumpBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.jump = false; });
+            attackBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.attack = true; });
+            attackBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.attack = false; });
         }
 
-        function initThreeJS(p1Input, p2Input) {
+        window.startGame = () => {
+            document.getElementById('menu').style.display = 'none';
+            if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+            if(InputMap.p1?.type==='touch' || InputMap.p2?.type==='touch') initTouch();
+            if(InputMap.p1?.type==='keyboard' || InputMap.p2?.type==='keyboard') document.body.requestPointerLock();
+            initEngine();
+        };
+
+        // --- ENGINE ---
+        let scene, renderer, clock;
+        const map = [], WS = 40, BS = 5;
+        const keys = {};
+
+        window.addEventListener('keydown', e => {
+            keys[e.code] = true;
+            if(e.code === 'KeyF') attackZombie(0);
+        });
+        window.addEventListener('keyup', e => keys[e.code] = false);
+
+        function initEngine() {
+            Sys.active = true;
+            clock = new THREE.Clock();
             scene = new THREE.Scene();
-            let fogColor = currentMap === 1 ? 0xC2B280 : 0x0b1013;
-            scene.background = new THREE.Color(fogColor);
-            scene.fog = new THREE.Fog(fogColor, 5, RENDER_DISTANCE);
-            
+            scene.background = new THREE.Color(0x000000);
+            scene.fog = new THREE.Fog(0x000000, 0, 25);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
             renderer = new THREE.WebGLRenderer({ antialias: false });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.autoClear = false;
             document.body.appendChild(renderer.domElement);
 
-            if (currentMap === 1) createBackrooms(); else createHospital();
+            generateWorld();
+            
+            if(InputMap.p1) createPlayer(1, InputMap.p1);
+            if(InputMap.p2) { createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display='block'; }
 
-            const aspect = selectedMode === 1 ? window.innerWidth/window.innerHeight : (window.innerWidth/2)/window.innerHeight;
-            players.push(new Player(0, 0x00ffff, p1Input, aspect));
-            if (selectedMode === 2) {
-                players.push(new Player(1, 0xff00ff, p2Input, aspect));
-                players[1].mesh.position.x = 3; 
-            }
+            setInterval(trySpawnZombie, 1000); 
 
-            document.addEventListener('keydown', e => keys[e.code] = true);
-            document.addEventListener('keyup', e => keys[e.code] = false);
-            document.addEventListener('mousemove', e => {
-                if (document.pointerLockElement === document.body) players.forEach(p => { if (p.inputType === 'keyboard' && !p.dead) p.mouseLook(e.movementX, e.movementY); });
-            });
-            document.addEventListener('mousedown', () => {
-                if (document.pointerLockElement === document.body) players.forEach(p => { if (p.inputType === 'keyboard' && !p.dead) p.tryShoot(); });
-            });
-
-            requestAnimationFrame(animate);
+            animate();
         }
 
-        class Player {
-            constructor(id, color, inputType, aspect) {
-                this.id = id; this.inputType = inputType; 
-                this.hp = 100; this.dead = false;
-                this.camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000);
-                this.pitch = 0; this.yaw = 0;
-                this.velocity = new THREE.Vector3(); this.isGrounded = false;
-                this.mesh = new THREE.Group(); this.mesh.position.set(0, 1.6, 0); 
-                
-                const bodyGeo = new THREE.BoxGeometry(1, 3, 1);
-                const bodyMat = new THREE.MeshStandardMaterial({ color: 0x333, emissive: color, emissiveIntensity: 0.5 });
-                this.body = new THREE.Mesh(bodyGeo, bodyMat);
-                this.mesh.add(this.body);
-                scene.add(this.mesh);
-                
-                const intensity = currentMap === 1 ? 1.5 : 5;
-                this.light = new THREE.SpotLight(0xffffff, intensity, RENDER_DISTANCE, Math.PI/4, 0.5);
-                this.light.position.set(0,0,0); this.light.target = new THREE.Object3D(); this.light.target.position.set(0,0,-1);
-                this.camera.add(this.light); this.camera.add(this.light.target);
-                scene.add(this.camera);
-                this.shootCooldown = 0;
-                this.bobTime = 0;
-            }
+        function generateWorld() {
+            const geo = new THREE.BoxGeometry(BS, BS*3, BS);
+            const pln = new THREE.PlaneGeometry(BS, BS);
+            const mW = new THREE.MeshLambertMaterial({ map: mat.wall });
+            const mF = new THREE.MeshLambertMaterial({ map: mat.floor });
+            const mC = new THREE.MeshLambertMaterial({ map: mat.ceil });
 
-            update(dt) {
-                if (this.dead) {
-                     if(this.inputType.startsWith('gamepad')) {
-                        const idx = parseInt(this.inputType.split('_')[1]);
-                        const gp = navigator.getGamepads()[idx];
-                        if(gp && gp.buttons[0].pressed) window.respawnPlayer(this.id);
-                     }
-                     return;
+            for(let x=0; x<WS; x++) {
+                map[x] = [];
+                for(let z=0; z<WS; z++) {
+                    const px = (x-WS/2)*BS, pz = (z-WS/2)*BS;
+                    const f = new THREE.Mesh(pln, mF); f.rotation.x = -Math.PI/2; f.position.set(px,0,pz); scene.add(f);
+                    const c = new THREE.Mesh(pln, mC); c.rotation.x = Math.PI/2; c.position.set(px,BS*3,pz); scene.add(c);
+                    let w = (x===0||x===WS-1||z===0||z===WS-1) || (Math.random()<0.1 && Math.abs(x-WS/2)>2);
+                    if(w) {
+                        map[x][z] = 1;
+                        const b = new THREE.Mesh(geo, mW); b.position.set(px,BS*1.5,pz); scene.add(b);
+                    } else map[x][z] = 0;
                 }
-                let moveX=0, moveZ=0, rotX=0, rotY=0, jump=false, shoot=false;
-
-                if (this.inputType === 'touch') {
-                    const state = touchStates[this.id];
-                    moveX = state.moveX; moveZ = state.moveY; 
-                    rotX = state.lookDeltaX * 1.5; rotY = state.lookDeltaY * 1.5;
-                    state.lookDeltaX = 0; state.lookDeltaY = 0;
-                    jump = state.jump; shoot = state.shoot;
-                } else if (this.inputType === 'keyboard') {
-                    if (keys['KeyW']) moveZ = -1; if (keys['KeyS']) moveZ = 1;
-                    if (keys['KeyA']) moveX = -1; if (keys['KeyD']) moveX = 1;
-                    if (keys['Space']) jump = true;
-                } else if (this.inputType.startsWith('gamepad')) {
-                    const idx = parseInt(this.inputType.split('_')[1]);
-                    const gp = navigator.getGamepads()[idx];
-                    if (gp) {
-                        if (Math.abs(gp.axes[0]) > 0.1) moveX = gp.axes[0];
-                        if (Math.abs(gp.axes[1]) > 0.1) moveZ = gp.axes[1];
-                        if (Math.abs(gp.axes[2]) > 0.1) rotX = gp.axes[2] * GAMEPAD_SENSITIVITY; 
-                        if (Math.abs(gp.axes[3]) > 0.1) rotY = gp.axes[3] * GAMEPAD_SENSITIVITY;
-                        if (gp.buttons[0].pressed) jump = true;
-                        if (gp.buttons[7].pressed) shoot = true;
-                    }
-                }
-
-                if (this.inputType === 'touch') { this.yaw -= rotX * 0.005; this.pitch -= rotY * 0.005; }
-                else { this.yaw -= rotX * dt; this.pitch -= rotY * dt; }
-                this.pitch = Math.max(-1.5, Math.min(1.5, this.pitch));
-
-                const speed = MOVE_SPEED * dt; 
-                const dir = new THREE.Vector3(0,0,-1).applyAxisAngle(new THREE.Vector3(0,1,0), this.yaw);
-                const side = new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), this.yaw);
-                const moveVec = new THREE.Vector3();
-                moveVec.add(dir.multiplyScalar(-moveZ));
-                moveVec.add(side.multiplyScalar(moveX));
-
-                const velocityVec = moveVec.clone();
-                let nextPos = this.mesh.position.clone();
-                nextPos.x += velocityVec.x * speed;
-                if (!checkWallCollision(nextPos)) { this.mesh.position.x += velocityVec.x * speed; }
-                
-                nextPos = this.mesh.position.clone();
-                nextPos.z += velocityVec.z * speed;
-                if (!checkWallCollision(nextPos)) { this.mesh.position.z += velocityVec.z * speed; }
-
-                if (jump && this.isGrounded) { this.velocity.y = 12; this.isGrounded = false; }
-                this.velocity.y -= 30 * dt;
-                this.mesh.position.y += this.velocity.y * dt;
-                if (this.mesh.position.y < 1.6) { this.mesh.position.y = 1.6; this.velocity.y = 0; this.isGrounded = true; }
-
-                this.mesh.rotation.y = this.yaw;
-                
-                if (moveX !== 0 || moveZ !== 0) {
-                    this.bobTime += dt * 15;
-                    this.camera.position.y = this.mesh.position.y + Math.sin(this.bobTime) * 0.1;
-                } else {
-                    this.camera.position.y = this.mesh.position.y;
-                }
-                
-                this.camera.position.x = this.mesh.position.x;
-                this.camera.position.z = this.mesh.position.z;
-                this.camera.rotation.set(this.pitch, this.yaw, 0, 'YXZ');
-
-                if (shoot) this.tryShoot();
-                if (this.shootCooldown > 0) this.shootCooldown -= dt;
-            }
-
-            mouseLook(mx, my) {
-                this.yaw -= mx * 0.002; this.pitch -= my * 0.002;
-                this.pitch = Math.max(-1.5, Math.min(1.5, this.pitch));
-            }
-
-            tryShoot() {
-                if (this.shootCooldown <= 0) {
-                    const dir = new THREE.Vector3(0,0,-1).applyQuaternion(this.camera.quaternion);
-                    const bullet = new THREE.Mesh(GEO_BULLET, MAT_BULLET);
-                    bullet.position.copy(this.camera.position).add(dir.clone().multiplyScalar(1));
-                    bullet.quaternion.copy(this.camera.quaternion);
-                    bullet.userData = { vel: dir.multiplyScalar(80), life: 1.0 };
-                    scene.add(bullet); bullets.push(bullet);
-                    this.shootCooldown = 0.15;
-                }
-            }
-
-            takeDamage(val) {
-                if (this.dead) return;
-                this.hp -= val;
-                document.getElementById('hp'+(this.id+1)).innerText = "HP: " + Math.ceil(Math.max(0, this.hp));
-                if (this.hp <= 0) {
-                    this.dead = true; this.mesh.rotation.z = Math.PI/2; this.mesh.position.y = 0.5;
-                    if(this.inputType === 'touch') document.getElementById('touch-layer').style.display = 'none';
-                    document.exitPointerLock();
-                    document.getElementById('p'+(this.id+1)+'-death').style.display = 'flex';
-                }
-            }
-            updateHearts() {
-                 document.getElementById('hp'+(this.id+1)).innerText = "HP: " + Math.ceil(Math.max(0, this.hp));
             }
         }
 
-        class Zombie {
-            constructor() {
-                // "Bacteria" Entity - Stick figure like
-                this.mesh = new THREE.Group();
-                const blackMat = new THREE.MeshStandardMaterial({ color: 0x000000, roughness: 0.9 });
+        function createPlayer(id, inp) {
+            const o = new THREE.Object3D();
+            const c = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
+            o.add(c);
+            
+            // STEVE MODELİ
+            const steve = createHumanoid(false);
+            // DÜZELTME: Kamera Y=9'da olduğu için, modelin ayaklarının yere basması için
+            // modeli kameraya göre 9 birim aşağı kaydırıyoruz.
+            steve.position.y = -PHYS.eyeHeight;
+            o.add(steve);
+
+            const l = new THREE.SpotLight(0xffaa00, 1, 25, 0.6); l.position.set(0,PHYS.eyeHeight,0); l.target.position.set(0,PHYS.eyeHeight,-1);
+            o.add(l); o.add(l.target);
+            
+            o.position.set(id===1?-5:5, PHYS.eyeHeight, 0);
+            scene.add(o);
+
+            Sys.players.push({
+                id, obj: o, cam: c, inp, rotX: 0, 
+                vel: new THREE.Vector3(0,0,0), onGround: false
+            });
+        }
+
+        // --- ZOMBİ MANTIĞI ---
+        function trySpawnZombie() {
+            if(Sys.zombies.length >= 5) return;
+            if(Math.random() > 0.3) return;
+
+            const rx = Math.floor(Math.random() * WS);
+            const rz = Math.floor(Math.random() * WS);
+            
+            if(map[rx][rz] === 0) {
+                const px = (rx-WS/2)*BS;
+                const pz = (rz-WS/2)*BS;
                 
-                const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2, 8), blackMat);
-                torso.position.y = 2.5; torso.rotation.z = (Math.random() - 0.5) * 0.2;
-                this.mesh.add(torso);
-
-                const head = new THREE.Mesh(new THREE.DodecahedronGeometry(0.2), blackMat);
-                head.position.y = 3.6; this.mesh.add(head);
-
-                const armL = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.5, 8), blackMat);
-                armL.position.set(-0.4, 3, 0); armL.rotation.z = 0.2; this.mesh.add(armL);
-                const armR = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 2.5, 8), blackMat);
-                armR.position.set(0.4, 3, 0); armR.rotation.z = -0.2; this.mesh.add(armR);
-                const legL = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.5, 8), blackMat);
-                legL.position.set(-0.3, 1.2, 0); legL.rotation.x = -0.1; this.mesh.add(legL);
-                const legR = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 2.5, 8), blackMat);
-                legR.position.set(0.3, 1.2, 0); legR.rotation.x = 0.1; this.mesh.add(legR);
-
-                this.respawn(); scene.add(this.mesh);
-                this.hp = 5; 
-                this.speed = 4.0 + Math.random() * 2; 
-                this.walkTime = 0;
-            }
-            respawn() {
-                this.hp = 5;
-                const targets = players.filter(p => !p.dead);
-                if (targets.length === 0) return;
-                const t = targets[Math.floor(Math.random()*targets.length)];
-                let safe=false, x, z;
-                const backAngle = t.yaw + Math.PI + (Math.random() - 0.5);
-                while(!safe) {
-                    const dist = 30 + Math.random()*20;
-                    x = t.mesh.position.x + Math.sin(backAngle)*dist;
-                    z = t.mesh.position.z + Math.cos(backAngle)*dist;
-                    if(!checkWallCollision(new THREE.Vector3(x, 2, z))) safe = true;
-                    else { x+= (Math.random()-0.5)*100; z+= (Math.random()-0.5)*100; if(!checkWallCollision(new THREE.Vector3(x, 2, z))) safe=true; }
-                }
-                this.mesh.position.set(x, 1.7, z);
-            }
-            update(dt) {
-                this.walkTime += dt * 15;
-                this.mesh.children[4].rotation.x = Math.sin(this.walkTime)*0.6;
-                this.mesh.children[5].rotation.x = Math.cos(this.walkTime)*0.6;
-                this.mesh.children[2].rotation.x = Math.sin(this.walkTime*1.5)*0.3;
-                this.mesh.children[3].rotation.x = Math.cos(this.walkTime*1.5)*0.3;
-
-                let target=null; let minD=Infinity;
-                players.forEach(p => { 
-                    if(!p.dead) { 
-                        const d = this.mesh.position.distanceTo(p.mesh.position); 
-                        if(d<minD){minD=d;target=p;} 
-                    } 
+                let tooClose = false;
+                Sys.players.forEach(p => {
+                    if(p.obj.position.distanceTo(new THREE.Vector3(px, PHYS.eyeHeight, pz)) < 20) tooClose = true;
                 });
-                
-                if (target) {
-                    this.mesh.lookAt(target.mesh.position.x, 1.7, target.mesh.position.z);
-                    const dir = new THREE.Vector3(); this.mesh.getWorldDirection(dir);
-                    const moveVec = dir.multiplyScalar(this.speed * dt);
-                    let nextPos = this.mesh.position.clone().add(moveVec);
-                    if(!checkWallCollision(nextPos)) this.mesh.position.add(moveVec);
+                if(tooClose) return;
+
+                const zObj = new THREE.Object3D();
+                // DÜZELTME: Zombiler zeminde (Y=0) doğar.
+                zObj.position.set(px, 0, pz);
+                const zModel = createHumanoid(true);
+                zObj.add(zModel);
+                scene.add(zObj);
+
+                Sys.zombies.push({ obj: zObj, hp: 3 });
+            }
+        }
+
+        function attackZombie(playerIdx) {
+            if(!Sys.players[playerIdx]) return;
+            const p = Sys.players[playerIdx];
+            
+            for(let i=0; i<Sys.zombies.length; i++) {
+                const z = Sys.zombies[i];
+                // Mesafe kontrolü (Zombinin ayaklarına olan mesafe)
+                if(z.obj.position.distanceTo(new THREE.Vector3(p.obj.position.x, 0, p.obj.position.z)) < 8) {
+                    z.hp--;
+                    z.obj.children[0].children[0].material.color.setHex(0xff0000); // Kızar
+                    setTimeout(() => {
+                        if(z.obj && z.obj.children[0]) z.obj.children[0].children[0].material.color.setHex(0x3d7a3d);
+                    }, 200);
+
+                    if(z.hp <= 0) {
+                        scene.remove(z.obj);
+                        Sys.zombies.splice(i, 1);
+                    }
+                    break;
+                }
+            }
+        }
+
+        let mx=0, my=0;
+        document.addEventListener('mousemove', e => { if(document.pointerLockElement) { mx+=e.movementX; my+=e.movementY; } });
+
+        function checkCol(pos) {
+            const gx = Math.round(pos.x/BS + WS/2);
+            const gz = Math.round(pos.z/BS + WS/2);
+            if(gx<0||gx>=WS||gz<0||gz>=WS) return true;
+            return map[gx][gz] === 1;
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = Math.min(clock.getDelta(), 0.1);
+
+            // --- OYUNCULAR ---
+            Sys.players.forEach(p => {
+                let inputX = 0, inputZ = 0, inputJump = false, rotY = 0, rotX = 0;
+
+                if(p.inp.type === 'keyboard') {
+                    if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1;
+                    if(keys['KeyA']) inputX = -1; if(keys['KeyD']) inputX = 1;
+                    if(keys['Space']) inputJump = true;
+                    rotY = -mx * 0.002; rotX = -my * 0.002;
+                }
+                else if(p.inp.type === 'touch') {
+                    inputX = TouchData.moveX; inputZ = TouchData.moveZ;
+                    inputJump = TouchData.jump;
+                    rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed;
                     
-                    const dist2d = Math.sqrt(Math.pow(this.mesh.position.x - target.mesh.position.x, 2) + Math.pow(this.mesh.position.z - target.mesh.position.z, 2));
-                    if(dist2d < 2.0) { 
-                         if(!this.atkCd || this.atkCd<=0) { target.takeDamage(20); this.atkCd=1.0; }
+                    if(TouchData.attack) {
+                        attackZombie(p.id-1);
+                        TouchData.attack = false;
                     }
-                    if(this.atkCd>0) this.atkCd-=dt;
+                    TouchData.lookX = 0; TouchData.lookY = 0;
                 }
-            }
-            hit() {
-                this.hp--;
-                this.mesh.rotation.z = (Math.random()-0.5) * 0.5;
-                setTimeout(() => { this.mesh.rotation.z = 0; }, 100);
-                const dir = new THREE.Vector3(); this.mesh.getWorldDirection(dir);
-                this.mesh.position.add(dir.negate().multiplyScalar(0.5));
-            }
-        }
+                else if(p.inp.type === 'gamepad') {
+                    const gp = navigator.getGamepads()[p.inp.index];
+                    if(gp) {
+                        if(Math.abs(gp.axes[0])>0.1) inputX = gp.axes[0];
+                        if(Math.abs(gp.axes[1])>0.1) inputZ = gp.axes[1];
+                        if(gp.buttons[0].pressed) inputJump = true;
+                        if(gp.buttons[2].pressed || gp.buttons[5].pressed || gp.buttons[7].pressed) attackZombie(p.id-1);
+                        if(Math.abs(gp.axes[2])>0.1) rotY = -gp.axes[2]*0.04;
+                        if(Math.abs(gp.axes[3])>0.1) rotX = -gp.axes[3]*0.04;
+                    }
+                }
 
-        function createBackrooms() {
-            wallBoxes = [];
-            const canvasW = document.createElement('canvas'); canvasW.width=256; canvasW.height=256;
-            const ctxW = canvasW.getContext('2d');
-            ctxW.fillStyle='#C2B280'; ctxW.fillRect(0,0,256,256);
-            for(let i=0;i<1000;i++){ctxW.fillStyle=Math.random()>0.5?'#b0a070':'#d4c490'; ctxW.fillRect(Math.random()*256,Math.random()*256,4,4);}
-            ctxW.fillStyle = 'rgba(140, 120, 50, 0.05)';
-            for(let i=0;i<256;i+=20) ctxW.fillRect(i,0,5,256);
-            const texW = new THREE.CanvasTexture(canvasW);
+                p.obj.rotation.y += rotY;
+                p.rotX = Math.max(-1.5, Math.min(1.5, p.rotX + rotX));
+                p.cam.rotation.x = p.rotX;
 
-            const canvasF = document.createElement('canvas'); canvasF.width=256; canvasF.height=256;
-            const ctxF = canvasF.getContext('2d'); ctxF.fillStyle='#8B8059'; ctxF.fillRect(0,0,256,256);
-            for(let i=0;i<5000;i++){ctxF.fillStyle=Math.random()>0.5?'#7a704b':'#9c9065'; ctxF.fillRect(Math.random()*256,Math.random()*256,2,2);}
-            const texF = new THREE.CanvasTexture(canvasF); texF.wrapS=THREE.RepeatWrapping; texF.wrapT=THREE.RepeatWrapping; texF.repeat.set(100,100);
+                const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(p.obj.quaternion); forward.y = 0; forward.normalize();
+                const right = new THREE.Vector3(1, 0, 0).applyQuaternion(p.obj.quaternion); right.y = 0; right.normalize();
+                const moveDir = new THREE.Vector3();
+                moveDir.addScaledVector(forward, inputZ); moveDir.addScaledVector(right, inputX);
+                if(moveDir.length() > 1) moveDir.normalize();
 
-            const canvasC = document.createElement('canvas'); canvasC.width=256; canvasC.height=256;
-            const ctxC = canvasC.getContext('2d'); ctxC.fillStyle='#E0E0E0'; ctxC.fillRect(0,0,256,256);
-            ctxC.strokeStyle='#aaa'; ctxC.lineWidth=4; ctxC.strokeRect(0,0,256,256);
-            ctxC.fillStyle='#fff'; ctxC.fillRect(40,40,432,432);
-            const texC = new THREE.CanvasTexture(canvasC); texC.wrapS=THREE.RepeatWrapping; texC.wrapT=THREE.RepeatWrapping; texC.repeat.set(50,50);
+                p.vel.x = moveDir.x * PHYS.speed;
+                p.vel.z = moveDir.z * PHYS.speed;
 
-            const floor = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({map:texF, roughness:1}));
-            floor.rotation.x = -Math.PI/2; floor.name="floor"; scene.add(floor);
-            
-            const ceiling = new THREE.Mesh(new THREE.PlaneGeometry(1000,1000), new THREE.MeshStandardMaterial({map:texC, emissive:0xaaaaaa, emissiveIntensity:0.2}));
-            ceiling.rotation.x = Math.PI/2; ceiling.position.y = 8; scene.add(ceiling);
-            ceiling.name = "ceiling";
+                if(p.onGround) {
+                    if(inputJump) { p.vel.y = PHYS.jumpForce; p.onGround = false; } else p.vel.y = 0;
+                } else {
+                    p.vel.y -= PHYS.gravity * dt;
+                }
 
-            const boxGeo = new THREE.BoxGeometry(4,8,4);
-            const boxMat = new THREE.MeshStandardMaterial({map:texW}); 
-            
-            for(let i=0; i<250; i++) {
-                const wall = new THREE.Mesh(boxGeo, boxMat);
-                const x = (Math.random()-0.5)*300; const z = (Math.random()-0.5)*300;
-                if(Math.abs(x)<10 && Math.abs(z)<10) continue;
-                wall.position.set(x, 4, z);
-                scene.add(wall); 
-                wallBoxes.push(new THREE.Box3().setFromObject(wall));
-            }
-            scene.add(new THREE.AmbientLight(0xffffff, 0.7)); 
-        }
+                p.obj.position.x += p.vel.x * dt;
+                if(checkCol(p.obj.position)) p.obj.position.x -= p.vel.x * dt;
 
-        function createHospital() {
-            wallBoxes = []; rampBoxes = [];
-            const floorMat = new THREE.MeshStandardMaterial({color:0x555555, roughness:0.5});
-            const wallMat = new THREE.MeshStandardMaterial({color:0xAEC6CF});
-            const glassMat = new THREE.MeshBasicMaterial({color:0x88ccff, transparent:true, opacity:0.3});
-            
-            for(let f=0; f<3; f++) {
-                const y = f * FLOOR_HEIGHT;
-                const floor = new THREE.Mesh(new THREE.BoxGeometry(120, 1, 120), floorMat);
-                floor.position.set(0, y-0.5, 0); scene.add(floor);
+                p.obj.position.z += p.vel.z * dt;
+                if(checkCol(p.obj.position)) p.obj.position.z -= p.vel.z * dt;
+
+                p.obj.position.y += p.vel.y * dt;
                 
-                const outer = [ {x:0, z:-60, w:120, d:1}, {x:0, z:60, w:120, d:1}, {x:-60, z:0, w:1, d:120}, {x:60, z:0, w:1, d:120} ];
-                outer.forEach(o => {
-                    const w = new THREE.Mesh(new THREE.BoxGeometry(o.w, 20, o.d), glassMat);
-                    w.position.set(o.x, y+5, o.z); scene.add(w); wallBoxes.push(new THREE.Box3().setFromObject(w));
-                });
-
-                for(let x=-40; x<=40; x+=20) {
-                    if(Math.abs(x)<15) continue; 
-                    const w1 = new THREE.Mesh(new THREE.BoxGeometry(1, 10, 15), wallMat); 
-                    w1.position.set(x, y+5, 0); scene.add(w1); wallBoxes.push(new THREE.Box3().setFromObject(w1));
-                }
-
-                if (f < 2) {
-                    createRamp(0, y, 50, -1); 
-                }
-            }
-            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-        }
-
-        function createRamp(x, y, z, dir) {
-            const stepGeo = new THREE.BoxGeometry(8, 1, 2);
-            const stepMat = new THREE.MeshStandardMaterial({color:0x444});
-            for(let i=0; i<10; i++) {
-                const s = new THREE.Mesh(stepGeo, stepMat);
-                s.position.set(x, y + i*1.5, z + i*2*dir); 
-                scene.add(s);
-            }
-            const rampBox = new THREE.Box3().setFromCenterAndSize(
-                new THREE.Vector3(x, y + 7, z + 10*dir), 
-                new THREE.Vector3(10, 15, 25)
-            );
-            rampBoxes.push({ box: rampBox, startY: y, endY: y + FLOOR_HEIGHT, dir: dir });
-        }
-
-        function animate(time) {
-            const dt = (time - lastTime) / 1000; lastTime = time;
-            const now = performance.now();
-            if (now - gameStartTime > START_DELAY_MS) {
-                if (now - lastSpawnTime > SPAWN_DELAY_MS && zombies.length < MAX_MONSTERS) {
-                    zombies.push(new Zombie()); lastSpawnTime = now;
-                }
-            }
-
-            if (currentMap === 1 && players.length > 0) {
-                const p = players[0];
-                if (p && !p.dead) {
-                    const floor = scene.getObjectByName("floor");
-                    const ceiling = scene.getObjectByName("ceiling");
-                    if(floor) { 
-                        floor.position.x = p.mesh.position.x; 
-                        floor.position.z = p.mesh.position.z;
-                        if(floor.material.map) {
-                            floor.material.map.offset.x = p.mesh.position.x / 2.5; 
-                            floor.material.map.offset.y = -p.mesh.position.z / 2.5;
-                        }
-                    }
-                    if(ceiling) {
-                        ceiling.position.x = p.mesh.position.x;
-                        ceiling.position.z = p.mesh.position.z;
-                         if(ceiling.material.map) {
-                            ceiling.material.map.offset.x = p.mesh.position.x / 5; 
-                            ceiling.material.map.offset.y = -p.mesh.position.z / 5;
-                        }
-                    }
-                    zombies.forEach(z => {
-                         if(z.mesh.position.distanceTo(p.mesh.position) > RENDER_DISTANCE + 20) z.respawn();
-                    });
-                }
-            }
-
-            players.forEach(p => p.update(dt));
-            zombies.forEach((z, i) => { z.update(dt); if(z.hp <= 0) { scene.remove(z.mesh); zombies.splice(i, 1); } });
-
-            bullets.forEach((b,i) => {
-                b.position.add(b.userData.vel.clone().multiplyScalar(dt)); b.userData.life -= dt;
-                let hit = false;
-                for(let z of zombies) { 
-                    const dist = b.position.distanceTo(z.mesh.position.clone().add(new THREE.Vector3(0,2,0)));
-                    if(dist < 2.5) { z.hit(); hit = true; break; } 
-                }
-                if(hit || b.userData.life <= 0) { scene.remove(b); bullets.splice(i,1); }
+                if(p.obj.position.y < PHYS.eyeHeight) { p.obj.position.y = PHYS.eyeHeight; p.onGround = true; p.vel.y = 0; } 
+                else { p.onGround = false; }
             });
 
-            renderer.clear();
-            const w = window.innerWidth, h = window.innerHeight;
+            // --- ZOMBİLERİ HAREKET ETTİR ---
+            const zSpeed = 4.0;
+            Sys.zombies.forEach(z => {
+                let closestDist = 999;
+                let target = null;
+                Sys.players.forEach(p => {
+                    const d = p.obj.position.distanceTo(z.obj.position);
+                    if(d < closestDist) { closestDist = d; target = p; }
+                });
 
-            if (selectedMode === 1) {
-                if(!players[0].dead) { 
-                    renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(false); 
-                    renderer.render(scene, players[0].camera); 
+                if(target && closestDist < 60) {
+                    // DÜZELTME: Zombiler yukarı bakmasın, düz baksın (Y=0 hedefle)
+                    z.obj.lookAt(target.obj.position.x, 0, target.obj.position.z);
+                    const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion);
+                    
+                    z.obj.position.addScaledVector(fwd, zSpeed * dt);
+                    if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt);
                 }
+            });
+
+            if(InputMap.p1?.type==='keyboard') { mx=0; my=0; }
+
+            const w=window.innerWidth, h=window.innerHeight;
+            if(Sys.players.length===1) {
+                const p = Sys.players[0]; p.cam.aspect=w/h; p.cam.updateProjectionMatrix();
+                renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(true);
+                renderer.render(scene, p.cam);
             } else {
-                renderer.setScissorTest(true);
-                if(!players[0].dead) { 
-                    renderer.setViewport(0,0,w/2,h); renderer.setScissor(0,0,w/2,h); 
-                    renderer.render(scene, players[0].camera); 
-                }
-                if(!players[1].dead) { 
-                    renderer.setViewport(w/2,0,w/2,h); renderer.setScissor(w/2,0,w/2,h); 
-                    renderer.render(scene, players[1].camera); 
-                }
+                Sys.players.forEach((p,i)=>{
+                    const l=i===0?0:w/2;
+                    p.cam.aspect=(w/2)/h; p.cam.updateProjectionMatrix();
+                    renderer.setViewport(l,0,w/2,h); renderer.setScissor(l,0,w/2,h); renderer.setScissorTest(true);
+                    renderer.render(scene, p.cam);
+                });
             }
-            requestAnimationFrame(animate);
         }
-
-        window.addEventListener('resize', () => {
-            if (!renderer) return; 
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            if(players[0]) players[0].camera.aspect = selectedMode===1 ? window.innerWidth/window.innerHeight : (window.innerWidth/2)/window.innerHeight;
-            if(players[1]) players[1].camera.aspect = (window.innerWidth/2)/window.innerHeight;
-            players.forEach(p => p.camera.updateProjectionMatrix());
-        });
+        window.addEventListener('resize', ()=>renderer.setSize(window.innerWidth, window.innerHeight));
     </script>
 </body>
 </html>
-
-
