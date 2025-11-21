@@ -3,14 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: MCPE Survival (FIXED)</title>
+    <title>Backrooms: Long Range Attack</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Minecraft', 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
         
-        /* UI */
+        /* UI LAYER */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
-        /* JOYSTICK (SOL) */
+        /* CAN BARI */
+        #health-container {
+            position: absolute; top: 20px; left: 20px;
+            width: 200px; height: 20px;
+            background: rgba(0,0,0,0.5); border: 2px solid white;
+            border-radius: 10px; overflow: hidden;
+        }
+        #health-bar {
+            width: 100%; height: 100%;
+            background: #ff0000;
+            transition: width 0.2s;
+        }
+        #damage-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: red; opacity: 0; pointer-events: none;
+            transition: opacity 0.1s; z-index: 5;
+        }
+
+        /* GAME OVER EKRANI */
+        #game-over-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(50, 0, 0, 0.9);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            color: white; z-index: 100; pointer-events: auto;
+        }
+        #game-over-screen h1 { font-size: 50px; color: #ff5555; text-shadow: 2px 2px 0 #000; margin: 0; }
+        #game-over-screen p { font-size: 20px; margin-top: 10px; color: #ddd; }
+
+        /* KONTROLLER */
         #joystick-zone {
             position: absolute; bottom: 50px; left: 50px;
             width: 140px; height: 140px;
@@ -24,7 +52,6 @@
             box-shadow: 0 0 15px rgba(255, 200, 0, 0.4);
         }
 
-        /* BUTTONS (SAĞ) */
         #touch-right-zone {
             position: absolute; top: 0; right: 0; width: 50%; height: 100%;
             pointer-events: auto; z-index: 20; touch-action: none;
@@ -38,7 +65,6 @@
         }
         #btn-jump:active { background: rgba(255,255,255,0.6); transform: scale(0.95); }
 
-        /* SALDIRI BUTONU */
         #btn-attack {
             position: absolute; bottom: 60px; right: 150px; 
             width: 70px; height: 70px; border-radius: 50%;
@@ -61,13 +87,24 @@
             border: 2px solid #555; margin: 10px; border-radius: 10px; cursor: pointer; width: 80%; max-width: 300px;
         }
         .active-slot { border-color: #0f0; background: #003300; }
-        
         #split-line { position: absolute; left: 50%; top: 0; width: 3px; height: 100%; background: #000; display: none; z-index: 5; transform: translateX(-50%); }
     </style>
 </head>
 <body>
 
+    <div id="damage-overlay"></div>
     <div id="split-line"></div>
+
+    <div id="ui-layer">
+        <div id="health-container" style="display:none;">
+            <div id="health-bar"></div>
+        </div>
+    </div>
+
+    <div id="game-over-screen" onclick="location.reload()">
+        <h1>ÖLDÜN!</h1>
+        <p>Yeniden başlamak için ekrana dokun</p>
+    </div>
 
     <div id="touch-ui" style="display:none;">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
@@ -80,95 +117,90 @@
         <h1>BACKROOMS MCPE</h1>
         <div id="p1-slot" class="btn">OYUNCU 1: Bekleniyor...</div>
         <div id="p2-slot" class="btn" style="display:none;">OYUNCU 2: Bekleniyor...</div>
-        
         <div id="controls-hint" style="margin:20px; color:#aaa; text-align:center;">
             Mod Seçimi:<br>
             <button onclick="setMode(1)" style="padding:10px;">TEK KİŞİLİK</button>
             <button onclick="setMode(2)" style="padding:10px;">ÇİFT KİŞİLİK</button>
         </div>
-
         <button id="btn-start" style="display:none; background:#d4d400; color:black; font-weight:bold; padding:20px 50px;" onclick="startGame()">BAŞLAT</button>
-        
-        <p style="font-size:12px; color:#666;">Cihazı atamak için: Klavye tuşuna bas, Gamepad'e bas veya aşağıdaki butonu kullan.</p>
-        <button id="btn-touch" onclick="assignTouch()" style="background:#0055aa; color:white; padding:10px;">DOKUNMATİK KONTROLÜ SEÇ</button>
+        <p style="font-size:12px; color:#666;">Kontrol: Klavye (WASD+Space+F) veya Dokunmatik.</p>
+        <button id="btn-touch" onclick="assignTouch()" style="background:#0055aa; color:white; padding:10px;">DOKUNMATİK SEÇ</button>
     </div>
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.126.0/build/three.module.js';
 
-        // --- SİSTEM ---
-        const Sys = { mode: 1, players: [], ready: 0, active: false, zombies: [] };
+        const Sys = { mode: 1, players: [], ready: 0, active: false, zombies: [], isGameOver: false };
         const InputMap = { p1: null, p2: null };
-
-        // --- FİZİK AYARLARI ---
-        const PHYS = {
-            speed: 12.5,
-            gravity: 80.0,
-            jumpForce: 25.0,
-            lookSpeed: 0.004,
-            eyeHeight: 9.0 // Göz hizası sabiti
+        
+        // HASSASİYET AYARLARI
+        const PHYS = { 
+            speed: 12.5, 
+            gravity: 80.0, 
+            jumpForce: 25.0, 
+            lookSpeed: 0.012 
         };
 
-        // --- TEXTURE ---
         const tl = new THREE.TextureLoader();
         const tex = (u) => { const t = tl.load(u); t.magFilter = THREE.NearestFilter; return t; };
-        const mat = {
+        
+        // RESİMLER
+        const texData = {
             wall: tex('./photos/brick.png'),
             floor: tex('./photos/cobblestone.png'),
             ceil: tex('./photos/acacia_trapdoor.png')
         };
 
-        // --- KARAKTER OLUŞTURUCU (DÜZELTİLDİ) ---
-        // Model artık Y=0 (Zemin) referans alınarak oluşturuluyor.
+        // DOKU TEKRARI (1 Resim = 1 Blok)
+        Object.values(texData).forEach(t => { 
+            if(t.isTexture) { 
+                t.magFilter = THREE.NearestFilter; 
+                t.wrapS = t.wrapT = THREE.RepeatWrapping; 
+            } 
+        });
+        if(texData.wall) texData.wall.repeat.set(1, 7); // Dikeyde 7 tekrar
+
+        const mat = {
+            wall: texData.wall,
+            floor: texData.floor,
+            ceil: texData.ceil
+        };
+
+        // MODEL OLUŞTURUCU
         function createHumanoid(isZombie) {
             const group = new THREE.Group();
-
-            const cSkin = isZombie ? 0x3d7a3d : 0xffccaa;
-            const cShirt = isZombie ? 0x3d7a3d : 0x00aaaa;
-            const cPants = 0x0000aa;
-
+            const cSkin = isZombie ? 0x3d7a3d : 0xffccaa; 
+            const cShirt = isZombie ? 0x3d7a3d : 0x00aaaa; 
+            const cPants = 0x0000aa; 
             const matSkin = new THREE.MeshLambertMaterial({ color: cSkin });
             const matShirt = new THREE.MeshLambertMaterial({ color: cShirt });
             const matPants = new THREE.MeshLambertMaterial({ color: cPants });
 
-            // Bacaklar (Yükseklik: 3.5. Merkez Y: 1.75)
-            const legGeo = new THREE.BoxGeometry(1.1, 3.5, 1.1);
-            const rLeg = new THREE.Mesh(legGeo, matPants);
-            rLeg.position.set(0.7, 1.75, 0);
-            group.add(rLeg);
-
-            const lLeg = new THREE.Mesh(legGeo, matPants);
-            lLeg.position.set(-0.7, 1.75, 0);
-            group.add(lLeg);
-
-            // Gövde (Yükseklik: 3.5. Başlangıç Y: 3.5. Merkez Y: 5.25)
-            const bodyGeo = new THREE.BoxGeometry(2.6, 3.5, 1.3);
-            const body = new THREE.Mesh(bodyGeo, matShirt);
-            body.position.y = 5.25;
-            group.add(body);
-
-            // Kollar (Merkez Y: 5.25)
+            const head = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), matSkin);
+            head.position.y = 8.25; group.add(head);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.5, 1.3), matShirt);
+            body.position.y = 5.25; group.add(body);
+            
             const armGeo = new THREE.BoxGeometry(1, 3.5, 1);
             const rArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin);
             rArm.position.set(1.9, 5.25, 0);
-            if(isZombie) { rArm.rotation.x = -Math.PI/2; rArm.position.y += 1.2; rArm.position.z += 1.2; }
+            if(isZombie) { rArm.rotation.x = -Math.PI/2; rArm.position.y += 1; rArm.position.z += 1.5; }
             group.add(rArm);
 
             const lArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin);
             lArm.position.set(-1.9, 5.25, 0);
-            if(isZombie) { lArm.rotation.x = -Math.PI/2; lArm.position.y += 1.2; lArm.position.z += 1.2; }
+            if(isZombie) { lArm.rotation.x = -Math.PI/2; lArm.position.y += 1; lArm.position.z += 1.5; }
             group.add(lArm);
 
-            // Kafa (Yükseklik: 2.5. Başlangıç Y: 7.0. Merkez Y: 8.25)
-            const headGeo = new THREE.BoxGeometry(2.5, 2.5, 2.5);
-            const head = new THREE.Mesh(headGeo, matSkin);
-            head.position.y = 8.25;
-            group.add(head);
+            const legGeo = new THREE.BoxGeometry(1.1, 3.5, 1.1);
+            const rLeg = new THREE.Mesh(legGeo, matPants);
+            rLeg.position.set(0.7, 1.75, 0); group.add(rLeg);
+            const lLeg = new THREE.Mesh(legGeo, matPants);
+            lLeg.position.set(-0.7, 1.75, 0); group.add(lLeg);
 
             return group;
         }
 
-        // --- MENÜ ---
         window.setMode = (m) => {
             Sys.mode = m;
             if(m===2) document.getElementById('p2-slot').style.display = 'block';
@@ -182,9 +214,7 @@
             for(let i=0; i<gps.length; i++) if(gps[i] && gps[i].buttons.some(b=>b.pressed)) assign('gamepad', i);
             requestAnimationFrame(checkInput);
         }
-        window.addEventListener('keydown', e => {
-            if(['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0);
-        });
+        window.addEventListener('keydown', e => { if(['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); });
         function assign(type, idx) {
             if(Sys.ready >= Sys.mode) return;
             if((InputMap.p1?.type===type && InputMap.p1.index===idx) || (InputMap.p2?.type===type && InputMap.p2.index===idx)) return;
@@ -198,7 +228,6 @@
             if(Sys.ready === Sys.mode) document.getElementById('btn-start').style.display='block';
         }
 
-        // --- TOUCH ---
         const TouchData = { moveX: 0, moveZ: 0, lookX: 0, lookY: 0, jump: false, attack: false, joyID: null, lookID: null };
         function initTouch() {
             const ui = document.getElementById('touch-ui');
@@ -209,6 +238,8 @@
             const attackBtn = document.getElementById('btn-attack');
 
             ui.style.display = 'block';
+            document.getElementById('health-container').style.display = 'block';
+
             if(Sys.mode === 2) {
                 const p1Touch = InputMap.p1?.type === 'touch';
                 ui.style.left = p1Touch ? '0' : '50%';
@@ -289,7 +320,6 @@
             initEngine();
         };
 
-        // --- ENGINE ---
         let scene, renderer, clock;
         const map = [], WS = 40, BS = 5;
         const keys = {};
@@ -305,7 +335,7 @@
             clock = new THREE.Clock();
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x000000);
-            scene.fog = new THREE.Fog(0x000000, 0, 25);
+            scene.fog = new THREE.Fog(0x000000, 0, 60);
             scene.add(new THREE.AmbientLight(0xffffff, 0.5));
 
             renderer = new THREE.WebGLRenderer({ antialias: false });
@@ -318,13 +348,12 @@
             if(InputMap.p1) createPlayer(1, InputMap.p1);
             if(InputMap.p2) { createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display='block'; }
 
-            setInterval(trySpawnZombie, 1000); 
-
+            setInterval(trySpawnZombie, 2000); 
             animate();
         }
 
         function generateWorld() {
-            const geo = new THREE.BoxGeometry(BS, BS*3, BS);
+            const geo = new THREE.BoxGeometry(BS, BS*7, BS);
             const pln = new THREE.PlaneGeometry(BS, BS);
             const mW = new THREE.MeshLambertMaterial({ map: mat.wall });
             const mF = new THREE.MeshLambertMaterial({ map: mat.floor });
@@ -335,11 +364,11 @@
                 for(let z=0; z<WS; z++) {
                     const px = (x-WS/2)*BS, pz = (z-WS/2)*BS;
                     const f = new THREE.Mesh(pln, mF); f.rotation.x = -Math.PI/2; f.position.set(px,0,pz); scene.add(f);
-                    const c = new THREE.Mesh(pln, mC); c.rotation.x = Math.PI/2; c.position.set(px,BS*3,pz); scene.add(c);
+                    const c = new THREE.Mesh(pln, mC); c.rotation.x = Math.PI/2; c.position.set(px,BS*7,pz); scene.add(c);
                     let w = (x===0||x===WS-1||z===0||z===WS-1) || (Math.random()<0.1 && Math.abs(x-WS/2)>2);
                     if(w) {
                         map[x][z] = 1;
-                        const b = new THREE.Mesh(geo, mW); b.position.set(px,BS*1.5,pz); scene.add(b);
+                        const b = new THREE.Mesh(geo, mW); b.position.set(px,BS*3.5,pz); scene.add(b);
                     } else map[x][z] = 0;
                 }
             }
@@ -349,69 +378,62 @@
             const o = new THREE.Object3D();
             const c = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100);
             o.add(c);
-            
-            // STEVE MODELİ
             const steve = createHumanoid(false);
-            // DÜZELTME: Kamera Y=9'da olduğu için, modelin ayaklarının yere basması için
-            // modeli kameraya göre 9 birim aşağı kaydırıyoruz.
-            steve.position.y = -PHYS.eyeHeight;
+            steve.position.y = -9.0; 
             o.add(steve);
-
-            const l = new THREE.SpotLight(0xffaa00, 1, 25, 0.6); l.position.set(0,PHYS.eyeHeight,0); l.target.position.set(0,PHYS.eyeHeight,-1);
+            const l = new THREE.SpotLight(0xffaa00, 1, 25, 0.6); l.position.set(0,9,0); l.target.position.set(0,9,-1);
             o.add(l); o.add(l.target);
-            
-            o.position.set(id===1?-5:5, PHYS.eyeHeight, 0);
+            o.position.set(id===1?-5:5, 9, 0);
             scene.add(o);
-
             Sys.players.push({
                 id, obj: o, cam: c, inp, rotX: 0, 
-                vel: new THREE.Vector3(0,0,0), onGround: false
+                vel: new THREE.Vector3(0,0,0), onGround: false,
+                hp: 100, lastHit: 0,
+                model: steve
             });
         }
 
-        // --- ZOMBİ MANTIĞI ---
         function trySpawnZombie() {
-            if(Sys.zombies.length >= 5) return;
-            if(Math.random() > 0.3) return;
-
+            if(Sys.zombies.length >= 8) return;
+            if(Math.random() > 0.4) return;
             const rx = Math.floor(Math.random() * WS);
             const rz = Math.floor(Math.random() * WS);
-            
             if(map[rx][rz] === 0) {
                 const px = (rx-WS/2)*BS;
                 const pz = (rz-WS/2)*BS;
-                
                 let tooClose = false;
-                Sys.players.forEach(p => {
-                    if(p.obj.position.distanceTo(new THREE.Vector3(px, PHYS.eyeHeight, pz)) < 20) tooClose = true;
-                });
+                Sys.players.forEach(p => { if(p.obj.position.distanceTo(new THREE.Vector3(px, 9, pz)) < 20) tooClose = true; });
                 if(tooClose) return;
-
                 const zObj = new THREE.Object3D();
-                // DÜZELTME: Zombiler zeminde (Y=0) doğar.
-                zObj.position.set(px, 0, pz);
                 const zModel = createHumanoid(true);
+                zModel.position.y = -9.0; 
                 zObj.add(zModel);
+                zObj.position.set(px, 9, pz);
                 scene.add(zObj);
-
                 Sys.zombies.push({ obj: zObj, hp: 3 });
             }
         }
 
         function attackZombie(playerIdx) {
-            if(!Sys.players[playerIdx]) return;
+            if(!Sys.players[playerIdx] || Sys.isGameOver) return;
             const p = Sys.players[playerIdx];
-            
+            p.cam.position.y -= 0.2; 
+            setTimeout(()=>p.cam.position.y += 0.2, 50);
             for(let i=0; i<Sys.zombies.length; i++) {
                 const z = Sys.zombies[i];
-                // Mesafe kontrolü (Zombinin ayaklarına olan mesafe)
-                if(z.obj.position.distanceTo(new THREE.Vector3(p.obj.position.x, 0, p.obj.position.z)) < 8) {
+                // MESAFE ARTIRILDI: 8 -> 25
+                if(z.obj.position.distanceTo(p.obj.position) < 25) {
                     z.hp--;
-                    z.obj.children[0].children[0].material.color.setHex(0xff0000); // Kızar
+                    z.obj.children[0].children.forEach(mesh => {
+                        if(mesh.material && mesh.material.emissive) mesh.material.emissive.setHex(0xff0000);
+                    });
                     setTimeout(() => {
-                        if(z.obj && z.obj.children[0]) z.obj.children[0].children[0].material.color.setHex(0x3d7a3d);
+                         if(z.obj && z.obj.children[0]) z.obj.children[0].children.forEach(mesh => {
+                            if(mesh.material && mesh.material.emissive) mesh.material.emissive.setHex(0x000000);
+                        });
                     }, 200);
-
+                    const knockback = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(2);
+                    z.obj.position.add(knockback);
                     if(z.hp <= 0) {
                         scene.remove(z.obj);
                         Sys.zombies.splice(i, 1);
@@ -425,35 +447,40 @@
         document.addEventListener('mousemove', e => { if(document.pointerLockElement) { mx+=e.movementX; my+=e.movementY; } });
 
         function checkCol(pos) {
-            const gx = Math.round(pos.x/BS + WS/2);
-            const gz = Math.round(pos.z/BS + WS/2);
+            const padding = 1.2; 
+            if(isWall(pos.x + padding, pos.z)) return true;
+            if(isWall(pos.x - padding, pos.z)) return true;
+            if(isWall(pos.x, pos.z + padding)) return true;
+            if(isWall(pos.x, pos.z - padding)) return true;
+            return false;
+        }
+
+        function isWall(x, z) {
+            const gx = Math.round(x/BS + WS/2);
+            const gz = Math.round(z/BS + WS/2);
             if(gx<0||gx>=WS||gz<0||gz>=WS) return true;
             return map[gx][gz] === 1;
         }
 
         function animate() {
+            if(Sys.isGameOver) return;
             requestAnimationFrame(animate);
             const dt = Math.min(clock.getDelta(), 0.1);
+            const now = Date.now();
 
-            // --- OYUNCULAR ---
             Sys.players.forEach(p => {
                 let inputX = 0, inputZ = 0, inputJump = false, rotY = 0, rotX = 0;
-
                 if(p.inp.type === 'keyboard') {
                     if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1;
                     if(keys['KeyA']) inputX = -1; if(keys['KeyD']) inputX = 1;
                     if(keys['Space']) inputJump = true;
-                    rotY = -mx * 0.002; rotX = -my * 0.002;
+                    rotY = -mx * 0.006; rotX = -my * 0.006;
                 }
                 else if(p.inp.type === 'touch') {
                     inputX = TouchData.moveX; inputZ = TouchData.moveZ;
                     inputJump = TouchData.jump;
                     rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed;
-                    
-                    if(TouchData.attack) {
-                        attackZombie(p.id-1);
-                        TouchData.attack = false;
-                    }
+                    if(TouchData.attack) { attackZombie(p.id-1); TouchData.attack = false; }
                     TouchData.lookX = 0; TouchData.lookY = 0;
                 }
                 else if(p.inp.type === 'gamepad') {
@@ -462,7 +489,7 @@
                         if(Math.abs(gp.axes[0])>0.1) inputX = gp.axes[0];
                         if(Math.abs(gp.axes[1])>0.1) inputZ = gp.axes[1];
                         if(gp.buttons[0].pressed) inputJump = true;
-                        if(gp.buttons[2].pressed || gp.buttons[5].pressed || gp.buttons[7].pressed) attackZombie(p.id-1);
+                        if(gp.buttons[2].pressed || gp.buttons[5].pressed) attackZombie(p.id-1);
                         if(Math.abs(gp.axes[2])>0.1) rotY = -gp.axes[2]*0.04;
                         if(Math.abs(gp.axes[3])>0.1) rotX = -gp.axes[3]*0.04;
                     }
@@ -489,18 +516,20 @@
 
                 p.obj.position.x += p.vel.x * dt;
                 if(checkCol(p.obj.position)) p.obj.position.x -= p.vel.x * dt;
-
                 p.obj.position.z += p.vel.z * dt;
                 if(checkCol(p.obj.position)) p.obj.position.z -= p.vel.z * dt;
-
                 p.obj.position.y += p.vel.y * dt;
                 
-                if(p.obj.position.y < PHYS.eyeHeight) { p.obj.position.y = PHYS.eyeHeight; p.onGround = true; p.vel.y = 0; } 
+                if(p.obj.position.y < 9.0) { p.obj.position.y = 9.0; p.onGround = true; p.vel.y = 0; } 
                 else { p.onGround = false; }
+
+                if(p.id === 1) {
+                    const hpPercent = Math.max(0, p.hp);
+                    document.getElementById('health-bar').style.width = hpPercent + '%';
+                }
             });
 
-            // --- ZOMBİLERİ HAREKET ETTİR ---
-            const zSpeed = 4.0;
+            const zSpeed = 5.0;
             Sys.zombies.forEach(z => {
                 let closestDist = 999;
                 let target = null;
@@ -510,30 +539,49 @@
                 });
 
                 if(target && closestDist < 60) {
-                    // DÜZELTME: Zombiler yukarı bakmasın, düz baksın (Y=0 hedefle)
-                    z.obj.lookAt(target.obj.position.x, 0, target.obj.position.z);
+                    z.obj.lookAt(target.obj.position.x, 9, target.obj.position.z);
                     const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion);
-                    
                     z.obj.position.addScaledVector(fwd, zSpeed * dt);
                     if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt);
+
+                    if(closestDist < 2.5) {
+                        if(now - target.lastHit > 1000) { 
+                            target.lastHit = now;
+                            target.hp -= 20; 
+                            const overlay = document.getElementById('damage-overlay');
+                            overlay.style.opacity = 0.5;
+                            setTimeout(() => overlay.style.opacity = 0, 100);
+                            const knock = fwd.clone().multiplyScalar(10);
+                            target.vel.add(knock);
+
+                            if(target.hp <= 0) {
+                                Sys.isGameOver = true;
+                                document.exitPointerLock();
+                                document.getElementById('game-over-screen').style.display = 'flex';
+                                document.getElementById('touch-ui').style.display = 'none';
+                            }
+                        }
+                    }
                 }
             });
 
             if(InputMap.p1?.type==='keyboard') { mx=0; my=0; }
 
             const w=window.innerWidth, h=window.innerHeight;
-            if(Sys.players.length===1) {
-                const p = Sys.players[0]; p.cam.aspect=w/h; p.cam.updateProjectionMatrix();
-                renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(true);
-                renderer.render(scene, p.cam);
-            } else {
-                Sys.players.forEach((p,i)=>{
+            Sys.players.forEach((p,i)=>{
+                if(p.model) p.model.visible = false;
+                if(Sys.players.length === 1) {
+                    p.cam.aspect=w/h; p.cam.updateProjectionMatrix();
+                    renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(true);
+                    renderer.render(scene, p.cam);
+                } else {
                     const l=i===0?0:w/2;
                     p.cam.aspect=(w/2)/h; p.cam.updateProjectionMatrix();
                     renderer.setViewport(l,0,w/2,h); renderer.setScissor(l,0,w/2,h); renderer.setScissorTest(true);
                     renderer.render(scene, p.cam);
-                });
-            }
+                }
+                if(p.model) p.model.visible = true;
+            });
         }
         window.addEventListener('resize', ()=>renderer.setSize(window.innerWidth, window.innerHeight));
     </script>
