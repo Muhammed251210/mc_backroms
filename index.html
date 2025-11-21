@@ -3,409 +3,333 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: Music & Hit Sounds</title>
+    <title>Backrooms: Menu Sound Fix & Optimized</title>
     <style>
-        /* --- GENEL AYARLAR --- */
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #000;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-        }
-
-        /* --- ARAYÜZ (UI) --- */
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
+        
+        /* UI LAYER */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
         /* CAN BARI */
         #health-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 250px;
-            height: 25px;
-            background: rgba(0, 0, 0, 0.6);
-            border: 3px solid white;
-            border-radius: 12px;
-            overflow: hidden;
-            display: block;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            position: absolute; top: 20px; left: 20px; width: 200px; height: 20px;
+            background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; overflow: hidden;
+            display: none; /* Menüde gizli */
         }
-
-        #health-bar {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000, #ff4444);
-            transition: width 0.2s ease-out;
-        }
+        #health-bar { width: 100%; height: 100%; background: #ff0000; transition: width 0.2s; }
 
         /* HASAR EFEKTİ */
-        #damage-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: red;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.1s ease-in-out;
-            z-index: 5;
-        }
-
-        /* BİLGİ MESAJI */
-        #join-alert {
-            position: absolute;
-            top: 20%;
-            width: 100%;
-            text-align: center;
-            color: #00ff00;
-            font-size: 30px;
-            font-weight: bold;
-            text-shadow: 2px 2px 0 #000;
-            display: none;
-            z-index: 150;
-        }
+        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: red; opacity: 0; pointer-events: none; transition: opacity 0.1s; z-index: 5; }
 
         /* MENÜLER */
         .overlay-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.92);
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            z-index: 100;
-            pointer-events: auto;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column;
+            align-items: center; justify-content: center; color: white; z-index: 100; pointer-events: auto;
         }
+        .overlay-screen h1 { font-size: 50px; margin: 0; text-shadow: 2px 2px 0 #000; }
+        .overlay-screen p { font-size: 20px; margin-top: 10px; color: #ddd; }
+        
+        #join-alert { position: absolute; top: 20%; width: 100%; text-align: center; color: #00ff00; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 0 #000; display: none; z-index: 150; }
 
-        .overlay-screen h1 {
-            font-size: 60px;
-            margin: 0 0 20px 0;
-            text-shadow: 4px 4px 0px #000;
-        }
+        #pause-screen h1 { color: #ffff55; } #game-over-screen h1 { color: #ff0000; }
 
-        .overlay-screen p {
-            font-size: 24px;
-            color: #ccc;
-            margin-top: 10px;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
-
-        #pause-screen h1 { color: #ffff00; }
-        #game-over-screen h1 { color: #ff0000; }
-
-        /* DOKUNMATİK KONTROLLER */
+        /* KONTROLLER */
         #touch-ui { display: none; }
-
-        #joystick-zone {
-            position: absolute; bottom: 50px; left: 50px; width: 160px; height: 160px;
-            background: rgba(255, 255, 255, 0.05); border: 2px solid rgba(255, 255, 255, 0.1);
-            border-radius: 50%; pointer-events: auto; touch-action: none;
+        #joystick-zone { position: absolute; bottom: 50px; left: 50px; width: 140px; height: 140px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 50%; pointer-events: auto; touch-action: none; }
+        #joystick-knob { position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; background: rgba(255, 200, 0, 0.6); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
+        #touch-right-zone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; z-index: 20; touch-action: none; }
+        
+        #btn-jump { position: absolute; bottom: 60px; right: 40px; width: 90px; height: 90px; border-radius: 50%; background: rgba(200, 200, 200, 0.3); border: 2px solid rgba(255,255,255,0.4); pointer-events: auto; z-index: 30; }
+        
+        #btn-attack { 
+            position: absolute; bottom: 60px; right: 150px; width: 70px; height: 70px; border-radius: 50%; 
+            background: rgba(255, 0, 0, 0.6); border: 2px solid rgba(255, 100, 100, 0.8); 
+            pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; 
+            color: white; font-weight: bold; font-size: 12px; 
         }
 
-        #joystick-knob {
-            position: absolute; top: 50%; left: 50%; width: 70px; height: 70px;
-            background: rgba(255, 200, 0, 0.5); border-radius: 50%;
-            transform: translate(-50%, -50%); pointer-events: none;
-            box-shadow: 0 0 15px rgba(255, 200, 0, 0.3);
-        }
-
-        #touch-right-zone {
-            position: absolute; top: 0; right: 0; width: 50%; height: 100%;
-            pointer-events: auto; z-index: 20; touch-action: none;
-        }
-
-        #btn-jump {
-            position: absolute; bottom: 80px; right: 40px; width: 100px; height: 100px;
-            border-radius: 50%; background: rgba(200, 200, 200, 0.2);
-            border: 3px solid rgba(255, 255, 255, 0.3); pointer-events: auto; z-index: 30;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold; font-size: 16px; user-select: none;
-        }
-
-        #btn-attack {
-            position: absolute; bottom: 80px; right: 160px; width: 80px; height: 80px;
-            border-radius: 50%; background: rgba(255, 0, 0, 0.5);
-            border: 3px solid rgba(255, 100, 100, 0.7); pointer-events: auto; z-index: 30;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-weight: bold; font-size: 14px; user-select: none;
-            box-shadow: 0 0 10px rgba(255,0,0,0.3);
-        }
-        #btn-attack:active { background: rgba(255, 0, 0, 0.8); transform: scale(0.95); }
-
-        /* MENÜ */
+        /* ESKİ LOBİ/MENÜ TASARIMI */
         #menu {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #111; color: #ffea00; z-index: 1000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             pointer-events: auto;
         }
-        #menu h1 { font-family: 'Courier New', monospace; font-size: 50px; margin-bottom: 30px; text-shadow: 3px 3px 5px #000; }
         .btn {
-            padding: 25px 50px; font-size: 24px; background: #333; color: white;
-            border: 3px solid #555; margin: 15px; border-radius: 15px;
-            cursor: pointer; width: 80%; max-width: 350px; text-align: center; transition: background 0.2s;
+            padding: 20px 40px; font-size: 20px; background: #333; color: white;
+            border: 2px solid #555; margin: 10px; border-radius: 10px;
+            cursor: pointer; width: 80%; max-width: 300px; text-align: center;
         }
-        .btn:hover { background: #444; }
-        .active-slot { border-color: #0f0; background: #003300; color: #0f0; }
-        #split-line { position: absolute; left: 50%; top: 0; width: 4px; height: 100%; background: #000; display: none; z-index: 5; transform: translateX(-50%); }
+        .active-slot { border-color: #0f0; background: #003300; }
+        #split-line { position: absolute; left: 50%; top: 0; width: 3px; height: 100%; background: #000; display: none; z-index: 5; transform: translateX(-50%); }
     </style>
 </head>
 <body>
-
     <div id="damage-overlay"></div>
     <div id="split-line"></div>
     <div id="join-alert">2. OYUNCU KATILDI!</div>
-
+    <div id="fps-counter" style="
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    color: #00ff00;
+    font-family: monospace;
+    font-size: 22px;
+    background: rgba(0,0,0,0.5);
+    padding: 5px 10px;
+    border-radius: 6px;
+    z-index: 6000;
+">0 FPS</div>
     <div id="ui-layer"><div id="health-container"><div id="health-bar"></div></div></div>
 
-    <div id="pause-screen" class="overlay-screen"><h1>DURAKLATILDI</h1><p>Devam etmek için Start'a bas</p></div>
-    <div id="game-over-screen" class="overlay-screen"><h1>ÖLDÜN!</h1><p>Yeniden doğmak için dokun</p></div>
+    <div id="pause-screen" class="overlay-screen" style="display:none;">
+        <h1>DURAKLATILDI</h1>
+        <p>Devam etmek için Start'a bas</p>
+    </div>
+
+    <div id="game-over-screen" class="overlay-screen" style="display:none;">
+        <h1>ÖLDÜN!</h1>
+        <p>Yeniden doğmak için tıkla</p>
+    </div>
 
     <div id="touch-ui">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
         <div id="touch-right-zone"></div>
-        <div id="btn-attack">VUR</div>
-        <div id="btn-jump">ZIPLA</div>
+        <div id="btn-attack">SALDIR</div>
+        <div id="btn-jump"></div>
     </div>
 
     <div id="menu">
-        <h1>THE BACKROOMS</h1>
+        <h1>BACKROOMS MCPE</h1>
         <div id="p1-slot" class="btn">OYUNCU 1: Bekleniyor...</div>
         <div id="p2-slot" class="btn" style="display:none;">OYUNCU 2: Bekleniyor...</div>
+        
         <div id="controls-hint" style="margin:20px; color:#aaa; text-align:center;">
-            <button onclick="setMode(1)" style="padding:10px; margin:5px; font-size:16px;">TEK KİŞİLİK</button>
-            <button onclick="setMode(2)" style="padding:10px; margin:5px; font-size:16px;">ÇİFT KİŞİLİK</button>
+            Mod Seçimi:<br>
+            <button id="btn-single" class="btn" style="padding:10px; margin:5px; display:inline-block;">TEK KİŞİLİK</button>
+            <button id="btn-multi" class="btn" style="padding:10px; margin:5px; display:inline-block;">ÇİFT KİŞİLİK</button>
         </div>
-        <button id="btn-start" style="display:none; background:#d4d400; color:black; font-weight:bold; padding:25px 60px;" onclick="startGame()">BAŞLAT</button>
-        <p style="font-size:14px; color:#888; margin-top: 20px;">Müzik ve efektler için 'sounds' klasörünü kontrol edin.</p>
-        <button id="btn-touch" onclick="assignTouch()" style="background:#0055aa; color:white; padding:15px; font-size:14px; margin-top:10px;">DOKUNMATİK SEÇ</button>
+
+        <button id="btn-start" class="btn" style="display:none; background:#d4d400; color:black; font-weight:bold; padding:20px 50px;">BAŞLAT</button>
+        
+        <p style="font-size:12px; color:#666;">
+            Tuş sesleri: sounds/click.mp3<br>
+            2. Kol Start'a 2 kez basarak katılabilir.
+        </p>
+        <button id="btn-touch-sel" class="btn" style="background:#0055aa; color:white; padding:10px;">DOKUNMATİK SEÇ</button>
     </div>
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.126.0/build/three.module.js';
 
-        // ==========================================
-        // 1. SİSTEM DEĞİŞKENLERİ
-        // ==========================================
+        // --- SİSTEM ---
         const Sys = { mode: 1, players: [], ready: 0, active: false, paused: false, isGameOver: false, zombies: [] };
         const InputMap = { p1: null, p2: null };
         const P2JoinData = { lastPressTime: 0, presses: 0 };
         const PauseData = { lastState: false };
-        const PHYS = { speed: 12.5, gravity: 80.0, jumpForce: 25.0, lookSpeed: 0.012 };
-        const WS = 100, BS = 5;
+        const PHYS = { speed: 12.5, gravity: 80.0, jumpForce: 25.0, lookSpeed: 0.007 }; // Look speed 0.004'e düşürüldü
+        const WS = 40, BS = 5; // Harita 40x40 yapıldı
         let map = [], mapTypes = [];
+        let isAudioContextInitiated = false; // Ses bağlamı başlatıldı mı?
+        
+        // --- FPS SAYACI VERİLERİ (OPTIMİZASYON) ---
+        let fps = 0;
+        let frameCount = 0;
+        let lastUpdate = 0;
+        const fpsElement = document.getElementById('fps-counter');
 
-        // ==========================================
-        // 2. SES & MÜZİK SİSTEMİ
-        // ==========================================
+
+        // --- SESLER (DÜZELTİLMİŞ) ---
         const Sounds = {};
-        // Efektler
-        const fxFiles = {
-            step: './sounds/step.mp3',
-            jump: './sounds/jump.mp3',
-            attack: './sounds/attack.mp3',
-            hurt: './sounds/hurt.mp3',
+        const audioFiles = { 
+            // Step sesi artık global değil, her oyuncu için ayrı yönetilecek.
+            // step: './sounds/step.mp3', 
+            jump: './sounds/jump.mp3', 
+            attack: './sounds/attack.mp3', 
+            hurt: './sounds/hurt.mp3', 
             zombie: './sounds/zombie.mp3'
         };
-        // Müzikler (Rastgele Çalacak)
-        const musicFiles = [
-            './sounds/LivingMice.mp3',
-            './sounds/MoogCity.mp3',
-            './sounds/SubwooferLullaby.mp3'
-        ];
+        const musicFiles = ['./sounds/LivingMice.mp3', './sounds/MoogCity.mp3', './sounds/SubwooferLullaby.mp3'];
         let currentMusic = null;
 
         function loadSounds() {
-            // Efektleri Yükle
-            for (const [key, path] of Object.entries(fxFiles)) {
-                const audio = new Audio(path);
-                audio.volume = 0.4;
-                Sounds[key] = audio;
+            // Step sesi hariç diğer sesleri yükle
+            for (const [key, path] of Object.entries(audioFiles)) {
+                const audio = new Audio(path); audio.volume = 0.4; Sounds[key] = audio;
             }
-            if(Sounds.step) Sounds.step.volume = 0.2;
+            // if(Sounds.step) Sounds.step.volume = 0.2; // Step sesi kaldırıldı
             if(Sounds.zombie) Sounds.zombie.volume = 0.6;
+            // Müzik yüklemesini burada yapmıyoruz, playRandomMusic içinde yapıyoruz.
+        }
+
+        // --- TUŞ SESİ (GARANTİ ÇALIŞAN) ---
+        function playClick() {
+            // Tarayıcı kısıtlamasını aşmak için her zaman ilk kullanıcı etkileşiminde çalışır.
+            try {
+                const clickAudio = new Audio('./sounds/click.mp3');
+                clickAudio.volume = 1.0; 
+                clickAudio.play().catch(()=>{ /* Ses hatasını yut */ });
+            } catch (e) {
+                // console.warn("Click sesi çalınamadı.");
+            }
         }
 
         function playSound(name) {
             if (Sounds[name] && Sys.active && !Sys.paused) {
-                Sounds[name].pause();
-                Sounds[name].currentTime = 0;
-                Sounds[name].play().catch(()=>{});
+                // Pause/CurrentTime'ı sadece bir kopya üzerinde yap
+                const audio = Sounds[name].cloneNode(); 
+                audio.play().catch(()=>{});
             }
         }
-
+        
         function playRandomMusic() {
-            if(currentMusic) return; // Zaten çalıyor
-            
-            const randomTrack = musicFiles[Math.floor(Math.random() * musicFiles.length)];
-            currentMusic = new Audio(randomTrack);
-            currentMusic.volume = 0.3; // Arkaplan müziği seviyesi
+            if(currentMusic || !isAudioContextInitiated) return;
+            const track = musicFiles[Math.floor(Math.random()*musicFiles.length)];
+            currentMusic = new Audio(track); currentMusic.volume = 0.3;
+            currentMusic.loop = false; // Tekrar çalma özelliğini kendi onended içinde yöneteceğiz
             
             currentMusic.play().then(() => {
-                console.log("Müzik başladı: " + randomTrack);
-            }).catch(e => console.log("Müzik hatası (Etkileşim gerek):", e));
-
-            // Müzik bitince
-            currentMusic.onended = () => {
+                // Başarılı
+            }).catch(() => {
+                // Başarısız olursa (örneğin kısıtlama hala varsa), bir sonraki denemeyi bekle
                 currentMusic = null;
-                // Bir sonraki şarkı için rastgele süre bekle (30sn - 2dk arası)
-                const waitTime = Math.random() * 90000 + 30000;
-                setTimeout(playRandomMusic, waitTime);
+            });
+            
+            currentMusic.onended = () => { 
+                currentMusic = null; 
+                // 30 saniye ile 90 saniye arası bekleme
+                setTimeout(playRandomMusic, Math.random() * 60000 + 30000); 
             };
         }
+        
+        // --- SES BAĞLAMLARINI BAŞLATAN İLK ETKİLEŞİM İŞLEYİCİSİ ---
+        function initAudioContext() {
+            if (isAudioContextInitiated) return;
+            isAudioContextInitiated = true;
+            loadSounds();
+            // Müziği hemen başlatmaya çalışma, sadece sistemi kur
+            if (Sys.active) playRandomMusic();
+        }
 
-        // ==========================================
-        // 3. DOKULAR
-        // ==========================================
+        // Tüm menü butonlarına, ilk tıklamada ses sistemini başlatma özelliğini ekle
+        document.querySelectorAll('.btn, button').forEach(el => {
+            el.addEventListener('click', initAudioContext, { once: true });
+            el.addEventListener('touchstart', initAudioContext, { once: true });
+        });
+        
+        // --- MENÜ TIKLAMALARI ---
+        document.getElementById('btn-single').addEventListener('click', () => { playClick(); setMode(1); });
+        document.getElementById('btn-single').addEventListener('touchstart', (e) => { e.preventDefault(); playClick(); setMode(1); });
+
+        document.getElementById('btn-multi').addEventListener('click', () => { playClick(); setMode(2); });
+        document.getElementById('btn-multi').addEventListener('touchstart', (e) => { e.preventDefault(); playClick(); setMode(2); });
+
+        document.getElementById('btn-start').addEventListener('click', () => { playClick(); startGame(); });
+        document.getElementById('btn-start').addEventListener('touchstart', (e) => { e.preventDefault(); playClick(); startGame(); });
+
+        document.getElementById('btn-touch-sel').addEventListener('click', () => { playClick(); assignTouch(); });
+        document.getElementById('btn-touch-sel').addEventListener('touchstart', (e) => { e.preventDefault(); playClick(); assignTouch(); });
+
+
+        // --- DOKULAR ---
         const tl = new THREE.TextureLoader();
         function loadTex(path, repeatY) {
-            const t = tl.load(path);
-            t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
+            const t = tl.load(path); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
             t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping;
             if (repeatY > 1) t.repeat.set(1, repeatY);
             return t;
         }
 
         const texMain = {
-            base: loadTex('./photos/hardened_clay_stained_magenta.png', 7),
-            glass: loadTex('./photos/glass_orange.png', 7),
-            var1: loadTex('./photos/hardened_clay_stained_magenta_1.png', 7),
-            var2: loadTex('./photos/hardened_clay_stained_magenta_2.png', 7),
-            pink: loadTex('./photos/hardened_clay_stained_pink.png', 7),
-            pink1: loadTex('./photos/hardened_clay_stained_pink_1.png', 7)
+            base: loadTex('./photos/hardened_clay_stained_magenta.png', 7), glass: loadTex('./photos/glass_orange.png', 7),
+            var1: loadTex('./photos/hardened_clay_stained_magenta_1.png', 7), var2: loadTex('./photos/hardened_clay_stained_magenta_2.png', 7),
+            pink: loadTex('./photos/hardened_clay_stained_pink.png', 7), pink1: loadTex('./photos/hardened_clay_stained_pink_1.png', 7)
         };
         const texRare = {
-            acacia: loadTex('./photos/acacia_trapdoor.png', 7),
-            brick: loadTex('./photos/brick.png', 7),
-            cobble: loadTex('./photos/cobblestone.png', 7),
-            mossy: loadTex('./photos/cobblestone_mossy.png', 7)
+            acacia: loadTex('./photos/acacia_trapdoor.png', 7), brick: loadTex('./photos/brick.png', 7),
+            cobble: loadTex('./photos/cobblestone.png', 7), mossy: loadTex('./photos/cobblestone_mossy.png', 7)
         };
         const texFloor = {
-            main: loadTex('./photos/hardened_clay_stained_magenta.png', 1),
-            deepslate: loadTex('./photos/cracked_deepslate_bricks.png', 1),
+            main: loadTex('./photos/hardened_clay_stained_magenta.png', 1), deepslate: loadTex('./photos/cracked_deepslate_bricks.png', 1),
             ceil: loadTex('./photos/acacia_trapdoor.png', 1)
         };
 
-        // MATERYALLER
         const matList = {
-            mainBase: new THREE.MeshLambertMaterial({ map: texMain.base }),
-            mainGlass: new THREE.MeshLambertMaterial({ map: texMain.glass, transparent: true, opacity: 0.9 }),
-            mainVar1: new THREE.MeshLambertMaterial({ map: texMain.var1 }),
-            mainVar2: new THREE.MeshLambertMaterial({ map: texMain.var2 }),
-            mainPink: new THREE.MeshLambertMaterial({ map: texMain.pink }),
-            mainPink1: new THREE.MeshLambertMaterial({ map: texMain.pink1 }),
-            rareAcacia: new THREE.MeshLambertMaterial({ map: texRare.acacia }),
-            rareBrick: new THREE.MeshLambertMaterial({ map: texRare.brick }),
-            rareCobble: new THREE.MeshLambertMaterial({ map: texRare.cobble }),
-            rareMossy: new THREE.MeshLambertMaterial({ map: texRare.mossy }),
-            floorMain: new THREE.MeshLambertMaterial({ map: texFloor.main }),
-            floorRare: new THREE.MeshLambertMaterial({ map: texFloor.deepslate }),
+            mainBase: new THREE.MeshLambertMaterial({ map: texMain.base }), mainGlass: new THREE.MeshLambertMaterial({ map: texMain.glass, transparent: true, opacity: 0.9 }),
+            mainVar1: new THREE.MeshLambertMaterial({ map: texMain.var1 }), mainVar2: new THREE.MeshLambertMaterial({ map: texMain.var2 }),
+            mainPink: new THREE.MeshLambertMaterial({ map: texMain.pink }), mainPink1: new THREE.MeshLambertMaterial({ map: texMain.pink1 }),
+            rareAcacia: new THREE.MeshLambertMaterial({ map: texRare.acacia }), rareBrick: new THREE.MeshLambertMaterial({ map: texRare.brick }),
+            rareCobble: new THREE.MeshLambertMaterial({ map: texRare.cobble }), rareMossy: new THREE.MeshLambertMaterial({ map: texRare.mossy }),
+            floorMain: new THREE.MeshLambertMaterial({ map: texFloor.main }), floorRare: new THREE.MeshLambertMaterial({ map: texFloor.deepslate }),
             ceil: new THREE.MeshLambertMaterial({ map: texFloor.ceil })
         };
         const wallsMain = [matList.mainBase, matList.mainBase, matList.mainBase, matList.mainGlass, matList.mainVar1, matList.mainVar2, matList.mainPink, matList.mainPink1];
         const wallsRare = [matList.rareAcacia, matList.rareBrick, matList.rareCobble, matList.rareMossy];
 
-        // ==========================================
-        // 4. KARAKTER & ZOMBİ MODELİ (GÖZLÜ/AĞIZLI)
-        // ==========================================
+        // --- KARAKTERLER ---
         function createHumanoid(isZombie) {
             const group = new THREE.Group();
-            const cSkin = isZombie ? 0x4a6b4a : 0xffccaa; 
-            const cShirt = isZombie ? 0x3d5c5c : 0x00aaaa; 
-            const cPants = isZombie ? 0x2a2a5c : 0x0000aa;
-            const cEyeW = isZombie ? 0x111111 : 0xffffff;
-            const cEyeP = isZombie ? 0x000000 : 0x0000ff;
-            const cMouth = isZombie ? 0x220000 : 0x663333;
+            const cSkin = isZombie ? 0x4a6b4a : 0xffccaa; const cShirt = isZombie ? 0x3d5c5c : 0x00aaaa; 
+            const cPants = isZombie ? 0x2a2a5c : 0x0000aa; const cEyeW = isZombie ? 0x111111 : 0xffffff;
+            const cEyeP = isZombie ? 0x000000 : 0x0000ff; const cMouth = isZombie ? 0x220000 : 0x663333;
 
-            const matSkin = new THREE.MeshLambertMaterial({ color: cSkin });
-            const matShirt = new THREE.MeshLambertMaterial({ color: cShirt });
-            const matPants = new THREE.MeshLambertMaterial({ color: cPants });
-            const matEyeW = new THREE.MeshLambertMaterial({ color: cEyeW });
-            const matPupil = new THREE.MeshLambertMaterial({ color: cEyeP });
-            const matMouth = new THREE.MeshLambertMaterial({ color: cMouth });
+            const matSkin = new THREE.MeshLambertMaterial({ color: cSkin }); const matShirt = new THREE.MeshLambertMaterial({ color: cShirt });
+            const matPants = new THREE.MeshLambertMaterial({ color: cPants }); const matEyeW = new THREE.MeshLambertMaterial({ color: cEyeW });
+            const matPupil = new THREE.MeshLambertMaterial({ color: cEyeP }); const matMouth = new THREE.MeshLambertMaterial({ color: cMouth });
 
-            const head = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), matSkin);
-            head.position.y = 8.25; 
-            
-            const eyeGeo = new THREE.BoxGeometry(0.6, 0.6, 0.1);
-            const pupilGeo = new THREE.BoxGeometry(0.3, 0.3, 0.11);
+            const head = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), matSkin); head.position.y = 8.25;
+            const eyeGeo = new THREE.BoxGeometry(0.6, 0.6, 0.1); const pupilGeo = new THREE.BoxGeometry(0.3, 0.3, 0.11);
             const lEye = new THREE.Mesh(eyeGeo, matEyeW); lEye.position.set(-0.7, 0.3, 1.26);
-            const lPupil = new THREE.Mesh(pupilGeo, matPupil); lPupil.position.set(0, 0, 0.05); lEye.add(lPupil);
-            head.add(lEye);
+            const lPupil = new THREE.Mesh(pupilGeo, matPupil); lPupil.position.set(0, 0, 0.05); lEye.add(lPupil); head.add(lEye);
             const rEye = new THREE.Mesh(eyeGeo, matEyeW); rEye.position.set(0.7, 0.3, 1.26);
-            const rPupil = new THREE.Mesh(pupilGeo, matPupil); rPupil.position.set(0, 0, 0.05); rEye.add(rPupil);
-            head.add(rEye);
-            const mouth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.1), matMouth);
-            mouth.position.set(0, -0.6, 1.26); head.add(mouth);
+            const rPupil = new THREE.Mesh(pupilGeo, matPupil); rPupil.position.set(0, 0, 0.05); rEye.add(rPupil); head.add(rEye);
+            const mouth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.1), matMouth); mouth.position.set(0, -0.6, 1.26); head.add(mouth);
             group.add(head);
 
-            const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.5, 1.3), matShirt);
-            body.position.y = 5.25; group.add(body);
-            
+            const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.5, 1.3), matShirt); body.position.y = 5.25; group.add(body);
             const armGeo = new THREE.BoxGeometry(1, 3.5, 1);
-            const rArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin);
-            rArm.position.set(1.9, 5.25, 0); 
-            if(isZombie) { rArm.rotation.x = -Math.PI/2; rArm.position.y += 1; rArm.position.z += 1.5; }
-            group.add(rArm);
-            const lArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin);
-            lArm.position.set(-1.9, 5.25, 0); 
-            if(isZombie) { lArm.rotation.x = -Math.PI/2; lArm.position.y += 1; lArm.position.z += 1.5; }
-            group.add(lArm);
-
-            const legGeo = new THREE.BoxGeometry(1.1, 3.5, 1.1);
-            const rLeg = new THREE.Mesh(legGeo, matPants); rLeg.position.set(0.7, 1.75, 0); group.add(rLeg);
+            const rArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin); rArm.position.set(1.9, 5.25, 0); 
+            if(isZombie) { rArm.rotation.x = -Math.PI/2; rArm.position.y += 1; rArm.position.z += 1.5; } group.add(rArm);
+            const lArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin); lArm.position.set(-1.9, 5.25, 0); 
+            if(isZombie) { lArm.rotation.x = -Math.PI/2; lArm.position.y += 1; lArm.position.z += 1.5; } group.add(lArm);
+            const legGeo = new THREE.BoxGeometry(1.1, 3.5, 1.1); const rLeg = new THREE.Mesh(legGeo, matPants); rLeg.position.set(0.7, 1.75, 0); group.add(rLeg);
             const lLeg = new THREE.Mesh(legGeo, matPants); lLeg.position.set(-0.7, 1.75, 0); group.add(lLeg);
             return group;
         }
 
-        // ==========================================
-        // 5. MENÜ & GİRİŞ
-        // ==========================================
-        window.setMode = (m) => { Sys.mode = m; if(m===2) document.getElementById('p2-slot').style.display = 'block'; document.getElementById('controls-hint').style.display = 'none'; checkInput(); };
+        // --- MENÜ İŞLEVLERİ ---
+        window.setMode = (m) => {
+            Sys.mode = m;
+            if(m===2) document.getElementById('p2-slot').style.display = 'block';
+            document.getElementById('controls-hint').style.display = 'none';
+            // document.getElementById('mode-select').style.display = 'none'; // Bu id HTML'de yok, kaldırıldı.
+            checkInput();
+        };
         window.assignTouch = () => assign('touch', 0);
         function checkInput() { if(Sys.active) return; const gps = navigator.getGamepads ? navigator.getGamepads() : []; for(let i=0; i<gps.length; i++) { if(gps[i] && gps[i].buttons.some(b=>b.pressed)) assign('gamepad', i); } requestAnimationFrame(checkInput); }
         const keys = {}; window.addEventListener('keydown', e => { keys[e.code] = true; if(!Sys.active && ['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); if(Sys.active && e.code === 'KeyF') attack(0); if(Sys.isGameOver) resetGame(); }); window.addEventListener('keyup', e => keys[e.code] = false);
-        document.getElementById('game-over-screen').addEventListener('click', resetGame); document.getElementById('game-over-screen').addEventListener('touchstart', resetGame);
+        document.getElementById('game-over-screen').onclick = resetGame;
+
         function assign(type, idx) {
-            if(Sys.ready >= Sys.mode) return; if(InputMap.p1 && InputMap.p1.type === type && InputMap.p1.index === idx) return;
+            if(Sys.ready >= Sys.mode) return;
+            if(InputMap.p1 && InputMap.p1.type === type && InputMap.p1.index === idx) return;
             const pid = InputMap.p1 ? 2 : 1; InputMap['p'+pid] = { type, index: idx };
-            document.getElementById('p'+pid+'-slot').innerText = `OYUNCU ${pid}: ${type.toUpperCase()}`;
-            document.getElementById('p'+pid+'-slot').classList.add('active-slot');
-            if(type==='touch') document.getElementById('btn-touch').style.display='none';
+            const slot = document.getElementById('p'+pid+'-slot');
+            slot.innerText = `OYUNCU ${pid}: ${type.toUpperCase()} HAZIR`;
+            slot.classList.add('active-slot');
+            if(type==='touch') document.getElementById('btn-touch-sel').style.display='none';
             Sys.ready++; if(Sys.ready === Sys.mode) document.getElementById('btn-start').style.display='block';
         }
 
-        // ==========================================
-        // 6. OYUN BAŞLATMA
-        // ==========================================
+        // --- OYUNU BAŞLAT ---
         window.startGame = () => {
             document.getElementById('menu').style.display = 'none';
+            document.getElementById('health-container').style.display = 'block';
             if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
             if(InputMap.p1?.type==='touch' || InputMap.p2?.type==='touch') initTouch();
             if(InputMap.p1?.type==='keyboard' || InputMap.p2?.type==='keyboard') document.body.requestPointerLock();
+            playRandomMusic(); // Müzik sistemi burada tetiklenmeli
             initEngine();
         };
 
@@ -416,23 +340,14 @@
             const light = new THREE.AmbientLight(0xffffff, 0.95); scene.add(light);
             renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.autoClear = false; document.body.appendChild(renderer.domElement);
             
-            loadSounds(); // Sesleri yükle
             generateWorld();
             if(InputMap.p1) createPlayer(1, InputMap.p1);
             if(InputMap.p2) { createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display='block'; }
             
-            // ZOMBI SİSTEMİ AKTİF
-            setInterval(trySpawnZombies, 10000);
-            
-            // Müzik Başlat
-            setTimeout(playRandomMusic, 2000); // 2 saniye sonra müzik başlasın
-
+            setInterval(trySpawnZombies, 10000); 
             animate();
         }
 
-        // ==========================================
-        // 7. DÜNYA
-        // ==========================================
         function generateWorld() {
             const geo = new THREE.BoxGeometry(BS, BS*7, BS); const pln = new THREE.PlaneGeometry(BS, BS);
             for(let x=0; x<WS; x++) { mapTypes[x] = []; map[x] = []; for(let z=0; z<WS; z++) mapTypes[x][z] = 0; }
@@ -446,8 +361,8 @@
                     let w = (x===0||x===WS-1||z===0||z===WS-1) || (Math.random()<0.1 && Math.abs(x-WS/2)>2 && Math.abs(z-WS/2)>2);
                     if(w) {
                         map[x][z] = 1; let wallMat;
-                        if(isRare) wallMat = wallsRare[Math.floor(Math.random() * wallsRare.length)];
-                        else { const rnd = Math.random(); if(rnd < 0.10) wallMat = matList.mainGlass; else if(rnd < 0.30) wallMat = wallsMain[Math.floor(Math.random() * wallsMain.length)]; else wallMat = matList.mainBase; }
+                        if(isRare) wallMat = wallsRare[Math.floor(Math.random()*wallsRare.length)];
+                        else { const rnd = Math.random(); if(rnd < 0.10) wallMat = matList.mainGlass; else if(rnd < 0.30) wallMat = wallsMain[Math.floor(Math.random()*wallsMain.length)]; else wallMat = matList.mainBase; }
                         const b = new THREE.Mesh(geo, wallMat); b.position.set(px,BS*3.5,pz); scene.add(b);
                     } else map[x][z] = 0;
                 }
@@ -459,120 +374,175 @@
             const steve = createHumanoid(false); steve.position.y = -9.0; o.add(steve);
             const l = new THREE.PointLight(0xffaa00, 0.3, 15); l.position.set(0,0,0); o.add(l);
             o.position.set(id===1?-5:5, 9, 0); scene.add(o);
-            Sys.players.push({ id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(0,0,0), onGround: false, hp: 100, model: steve, lastStepTime: 0 });
+            
+            // --- ADIM SESİ OPTİMİZASYONU: Her oyuncu için ayrı loop'lu ses nesnesi
+            const stepAudio = new Audio('./sounds/step.mp3');
+            stepAudio.loop = true;
+            stepAudio.volume = 0.2;
+
+            Sys.players.push({ id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(), onGround: false, hp: 100, model: steve, lastStep: 0, stepAudio: stepAudio });
         }
 
-        // ==========================================
-        // 8. SALDIRI VE ZOMBİLER
-        // ==========================================
         function trySpawnZombies() {
             if(Sys.isGameOver || Sys.paused || Sys.zombies.length >= 15) return;
             let spawned = 0, attempts = 0;
             while(spawned < 3 && attempts < 50) {
-                attempts++; const rx = Math.floor(Math.random() * WS), rz = Math.floor(Math.random() * WS);
+                attempts++; const rx = Math.floor(Math.random()*WS), rz = Math.floor(Math.random()*WS);
                 if(map[rx][rz] === 0) {
                     const px = (rx-WS/2)*BS, pz = (rz-WS/2)*BS;
-                    let tooClose = false; Sys.players.forEach(p => { if(p.obj.position.distanceTo(new THREE.Vector3(px, 9, pz)) < 20) tooClose = true; });
-                    if(!tooClose) {
-                        const zObj = new THREE.Object3D();
-                        const zModel = createHumanoid(true); zModel.position.y = -9.0; zObj.add(zModel); zObj.position.set(px, 9, pz);
-                        scene.add(zObj); Sys.zombies.push({ obj: zObj, hp: 3 }); spawned++; playSound('zombie');
+                    let safe = true; Sys.players.forEach(p => { if(p.obj.position.distanceTo(new THREE.Vector3(px,9,pz)) < 20) safe = false; });
+                    if(safe) {
+                        const zObj = new THREE.Object3D(); const zModel = createHumanoid(true); zModel.position.y = -9.0; zObj.add(zModel);
+                        zObj.position.set(px, 9, pz); scene.add(zObj); Sys.zombies.push({ obj: zObj, hp: 3 });
+                        spawned++; playSound('zombie');
                     }
                 }
             }
         }
 
-        // SALDIRI FONKSİYONU (PvP ve PvE)
-        function attack(attackerIdx) {
-            if(!Sys.players[attackerIdx] || Sys.isGameOver || Sys.paused) return;
-            const attacker = Sys.players[attackerIdx];
-            attacker.cam.position.y -= 0.2; setTimeout(()=>attacker.cam.position.y += 0.2, 50);
-            
-            // Eğer vuruş isabet ederse ses çıkacak, boş sallayınca ses yok (istek üzerine)
-            let hitConfirmed = false; 
-
-            // Zombilere Saldırı
+        function attack(pIdx) {
+            if(!Sys.players[pIdx] || Sys.paused) return;
+            const p = Sys.players[pIdx]; p.cam.position.y -= 0.2; setTimeout(()=>p.cam.position.y+=0.2, 50);
+            let hit = false;
             for(let i=0; i<Sys.zombies.length; i++) {
                 const z = Sys.zombies[i];
-                if(z.obj.position.distanceTo(attacker.obj.position) < 25) {
-                    z.hp--; hitConfirmed = true;
-                    playSound('attack'); // Vuruş sesi (hit sound)
-                    z.obj.children[0].children.forEach(mesh => { if(mesh.material?.emissive) mesh.material.emissive.setHex(0xff0000); });
-                    setTimeout(() => { if(z.obj) z.obj.children[0].children.forEach(mesh => { if(mesh.material?.emissive) mesh.material.emissive.setHex(0x000000); }); }, 200);
-                    const knock = new THREE.Vector3().subVectors(z.obj.position, attacker.obj.position).normalize().multiplyScalar(4); z.obj.position.add(knock);
+                if(z.obj.position.distanceTo(p.obj.position) < 25) {
+                    z.hp--; hit=true; playSound('attack'); playSound('hurt');
+                    z.obj.children[0].children.forEach(m => { if(m.material.color) m.material.color.setHex(0xff0000); });
+                    setTimeout(() => { if(z.obj) z.obj.children[0].children.forEach((m,k) => { const def = (k===0)?0x4a6b4a:(k===4||k===5||k===6)?0x3d5c5c:(k===7||k===8)?0x2a2a5c:0x111111; if(m.material.color) m.material.color.setHex(def); }); }, 100);
+                    const k = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(5); z.obj.position.add(k);
                     if(z.hp <= 0) { scene.remove(z.obj); Sys.zombies.splice(i, 1); } break;
                 }
             }
-
-            // Oyunculara Saldırı (PvP)
-            if(!hitConfirmed && Sys.mode === 2) {
-                Sys.players.forEach((target, idx) => {
-                    if(idx !== attackerIdx && target.obj.position.distanceTo(attacker.obj.position) < 25) {
-                        target.hp -= 10; hitConfirmed = true;
-                        playSound('attack'); playSound('hurt'); // Hem vuruş hem acı sesi
-                        if(target.id === 1) { const ov = document.getElementById('damage-overlay'); ov.style.opacity = 0.5; setTimeout(()=>ov.style.opacity=0, 100); }
-                        const knock = new THREE.Vector3().subVectors(target.obj.position, attacker.obj.position).normalize().multiplyScalar(6); target.obj.position.add(knock);
-                    }
-                });
+            if(!hit && Sys.mode===2) {
+                Sys.players.forEach((t, ti) => { if(ti!==pIdx && t.obj.position.distanceTo(p.obj.position)<25) { t.hp-=10; hit=true; playSound('attack'); playSound('hurt'); const k = new THREE.Vector3().subVectors(t.obj.position, p.obj.position).normalize().multiplyScalar(8); t.obj.position.add(k); t.obj.position.y+=2; t.onGround=false; if(t.id===1) { const ov=document.getElementById('damage-overlay'); ov.style.opacity=0.5; setTimeout(()=>ov.style.opacity=0, 100); } } });
             }
         }
 
-        // ==========================================
-        // 9. SİSTEM YÖNETİMİ
-        // ==========================================
         function resetGame() { if(!Sys.isGameOver) return; Sys.isGameOver = false; Sys.players.forEach(p => { p.hp = 100; p.obj.position.set(p.id===1?-5:5, 9, 0); }); document.getElementById('health-bar').style.width = '100%'; Sys.zombies.forEach(z => scene.remove(z.obj)); Sys.zombies = []; document.getElementById('game-over-screen').style.display = 'none'; if(InputMap.p1 && InputMap.p1.type==='keyboard') document.body.requestPointerLock(); }
         function joinPlayer2(gpIndex) { if(Sys.mode === 2) return; Sys.mode = 2; InputMap.p2 = { type: 'gamepad', index: gpIndex }; createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display = 'block'; document.getElementById('join-alert').style.display = 'block'; setTimeout(()=>document.getElementById('join-alert').style.display='none', 3000); if(InputMap.p1.type === 'touch') { document.getElementById('touch-ui').style.width = '50%'; document.getElementById('touch-ui').style.left = '0'; } }
-        function handleGamepadSystem() { const gps = navigator.getGamepads(); if(!gps) return; if(InputMap.p1?.type === 'gamepad') { const gp = gps[InputMap.p1.index]; if(gp) { if(gp.buttons[9].pressed) { if(!PauseData.lastState && Sys.mode===1) { Sys.paused = !Sys.paused; document.getElementById('pause-screen').style.display = Sys.paused?'flex':'none'; } PauseData.lastState=true; } else PauseData.lastState=false; if((gp.buttons[2].pressed || gp.buttons[5].pressed || gp.buttons[7].pressed) && !Sys.paused) attack(0); } } if(Sys.mode === 1 && !Sys.paused) { for(let i=0; i<gps.length; i++) { const gp = gps[i]; if(gp && (!InputMap.p1 || (InputMap.p1.type !== 'gamepad' || InputMap.p1.index !== i))) { if(gp.buttons[9].pressed) { const now = Date.now(); if(now - P2JoinData.lastPressTime > 500) P2JoinData.presses = 0; if(now - P2JoinData.lastPressTime > 200) { P2JoinData.presses++; P2JoinData.lastPressTime = now; if(P2JoinData.presses >= 2) joinPlayer2(i); } } } } } }
+        function handleGamepad() {
+            const gps = navigator.getGamepads(); if(!gps) return;
+            if(InputMap.p1?.type === 'gamepad') { const gp = gps[InputMap.p1.index]; if(gp) { if(gp.buttons[9].pressed) { if(!PauseData.lastState && Sys.mode===1) { Sys.paused = !Sys.paused; document.getElementById('pause-screen').style.display = Sys.paused?'flex':'none'; } PauseData.lastState=true; } else PauseData.lastState=false; if((gp.buttons[2].pressed || gp.buttons[5].pressed || gp.buttons[7].pressed) && !Sys.paused) attack(0); } }
+            if(Sys.mode === 1 && !Sys.paused) { for(let i=0; i<gps.length; i++) { if(gps[i] && (!InputMap.p1 || InputMap.p1.index !== i)) { if(gps[i].buttons[9].pressed) { const now = Date.now(); if(now - P2JoinData.lastPressTime > 500) P2JoinData.presses = 0; if(now - P2JoinData.lastPressTime > 200) { P2JoinData.presses++; P2JoinData.lastPressTime = now; if(P2JoinData.presses >= 2) joinPlayer2(i); } } } } }
+        }
+
         const TouchData = { moveX: 0, moveZ: 0, lookX: 0, lookY: 0, jump: false, attack: false, joyID: null, lookID: null };
-        function initTouch() { const ui = document.getElementById('touch-ui'); const joyZone = document.getElementById('joystick-zone'); const joyKnob = document.getElementById('joystick-knob'); const lookZone = document.getElementById('touch-right-zone'); const jumpBtn = document.getElementById('btn-jump'); const attackBtn = document.getElementById('btn-attack'); ui.style.display = 'block'; if(Sys.mode === 2) { const p1Touch = InputMap.p1?.type === 'touch'; ui.style.left = p1Touch ? '0' : '50%'; ui.style.width = '50%'; } let joyStart = {x:0, y:0}; joyZone.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; TouchData.joyID = t.identifier; joyStart.x = t.clientX; joyStart.y = t.clientY; }); joyZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { let dx = e.changedTouches[i].clientX - joyStart.x; let dy = e.changedTouches[i].clientY - joyStart.y; const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50); const angle = Math.atan2(dy, dx); joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`; TouchData.moveX = (Math.cos(angle)*dist)/50; TouchData.moveZ = (Math.sin(angle)*dist)/50; } } }); joyZone.addEventListener('touchend', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { TouchData.joyID = null; TouchData.moveX = 0; TouchData.moveZ = 0; joyKnob.style.transform = `translate(-50%, -50%)`; } } }); let lookStart = {x:0, y:0}; lookZone.addEventListener('touchstart', e => { e.preventDefault(); if(e.target !== jumpBtn && e.target !== attackBtn) { const t = e.changedTouches[0]; TouchData.lookID = t.identifier; lookStart.x = t.clientX; lookStart.y = t.clientY; } }); lookZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) { TouchData.lookX = (e.changedTouches[i].clientX - lookStart.x); TouchData.lookY = (e.changedTouches[i].clientY - lookStart.y); lookStart.x = e.changedTouches[i].clientX; lookStart.y = e.changedTouches[i].clientY; } } }); lookZone.addEventListener('touchend', e => { for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) TouchData.lookID = null; } }); jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.jump = true; }); jumpBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.jump = false; }); attackBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.attack = true; }); attackBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.attack = false; }); }
+        function initTouch() { const ui = document.getElementById('touch-ui'); const joyZone = document.getElementById('joystick-zone'); const joyKnob = document.getElementById('joystick-knob'); const lookZone = document.getElementById('touch-right-zone'); const jumpBtn = document.getElementById('btn-jump'); const attackBtn = document.getElementById('btn-attack'); ui.style.display = 'block'; if(Sys.mode === 2) { const p1Touch = InputMap.p1?.type === 'touch'; ui.style.left = p1Touch ? '0' : '50%'; ui.style.width = '50%'; } let joyStart = {x:0, y:0}; joyZone.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; TouchData.joyID = t.identifier; joyStart.x = t.clientX; joyStart.y = t.clientY; }); joyZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { let dx = e.changedTouches[i].clientX - joyStart.x; let dy = e.changedTouches[i].clientY - joyStart.y; const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50); const angle = Math.atan2(dy, dx); joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`; TouchData.moveX = (Math.cos(angle)*dist)/50; TouchData.moveZ = (Math.sin(angle)*dist)/50; } } }); joyZone.addEventListener('touchend', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { TouchData.joyID = null; TouchData.moveX = 0; TouchData.moveZ = 0; joyKnob.style.transform = `translate(-50%, -50%)`; } } }); let lookStart = {x:0, y:0}; lookZone.addEventListener('touchstart', e => { e.preventDefault(); if(e.target !== jumpBtn && e.target !== attackBtn && !attackBtn.contains(e.target)) { const t = e.changedTouches[0]; TouchData.lookID = t.identifier; lookStart.x = t.clientX; lookStart.y = t.clientY; } }); lookZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) { TouchData.lookX = (e.changedTouches[i].clientX - lookStart.x); TouchData.lookY = (e.changedTouches[i].clientY - lookStart.y); lookStart.x = e.changedTouches[i].clientX; lookStart.y = e.changedTouches[i].clientY; } } }); lookZone.addEventListener('touchend', e => { for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) TouchData.lookID = null; } }); jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.jump = true; }); jumpBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.jump = false; }); attackBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.attack = true; }); attackBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.attack = false; }); }
 
         let mx=0, my=0; document.addEventListener('mousemove', e => { if(document.pointerLockElement) { mx+=e.movementX; my+=e.movementY; } });
-        function checkCol(pos) { const padding = 1.2; if(isWall(pos.x+padding, pos.z) || isWall(pos.x-padding, pos.z) || isWall(pos.x, pos.z+padding) || isWall(pos.x, pos.z-padding)) return true; return false; }
+        function checkCol(pos) { const p=1.2; if(isWall(pos.x+p,pos.z)||isWall(pos.x-p,pos.z)||isWall(pos.x,pos.z+p)||isWall(pos.x,pos.z-p)) return true; return false; }
         function isWall(x, z) { const gx = Math.round(x/BS + WS/2); const gz = Math.round(z/BS + WS/2); if(gx<0||gx>=WS||gz<0||gz>=WS) return true; return map[gx][gz] === 1; }
 
         function animate() {
-            requestAnimationFrame(animate); handleGamepadSystem(); if(Sys.paused) return;
-            const dt = Math.min(clock.getDelta(), 0.1); const now = Date.now();
+            requestAnimationFrame(animate); handleGamepad();
 
-            Sys.players.forEach((p,i) => {
+            // --- FPS SAYACI GÜNCELLEMESİ (OPTIMİZASYON) ---
+            const now = Date.now();
+            frameCount++;
+            if (now - lastUpdate > 1000) {
+                fps = frameCount;
+                fpsElement.innerText = `${fps} FPS`;
+                frameCount = 0;
+                lastUpdate = now;
+            }
+            // ---------------------------------------------
+
+            if(Sys.paused) return;
+            const dt = Math.min(clock.getDelta(), 0.1); 
+
+            Sys.players.forEach((p, i) => {
                 let inputX = 0, inputZ = 0, rotY = 0, rotX = 0;
+                let isMoving = false; // Adım sesi için yeni bayrak
+
                 if(!Sys.isGameOver) {
-                    if(p.inp.type === 'keyboard') { if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1; if(keys['KeyA']) inputX = -1; if(keys['KeyD']) inputX = 1; if(keys['Space'] && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } rotY = -mx * 0.006; rotX = -my * 0.006; }
-                    else if(p.inp.type === 'touch') { inputX = TouchData.moveX; inputZ = TouchData.moveZ; if(TouchData.jump && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed; if(TouchData.attack) { attack(p.id-1); TouchData.attack = false; } TouchData.lookX=0; TouchData.lookY=0; }
-                    else if(p.inp.type === 'gamepad') { const gp = navigator.getGamepads()[p.inp.index]; if(gp) { if(Math.abs(gp.axes[0])>0.1) inputX = gp.axes[0]; if(Math.abs(gp.axes[1])>0.1) inputZ = gp.axes[1]; if(gp.buttons[0].pressed && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } if(Math.abs(gp.axes[2])>0.1) rotY = -gp.axes[2]*0.04; if(Math.abs(gp.axes[3])>0.1) rotX = -gp.axes[3]*0.04; } }
+                    if(p.inp.type === 'keyboard') { 
+                        if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1; 
+                        if(keys['KeyA']) inputX = -1; if(keys['KeyD']) inputX = 1; 
+                        if(keys['Space'] && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
+                        rotY = -mx * 0.006; rotX = -my * 0.006; 
+                        if(keys['KeyE'] || keys['KeyR']) attack(i); // E tuşu saldırı ekle
+                    }
+                    else if(p.inp.type === 'touch') { 
+                        inputX = TouchData.moveX; inputZ = TouchData.moveZ; 
+                        if(TouchData.jump && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
+                        rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed; 
+                        if(TouchData.attack) { attack(i); TouchData.attack = false; } 
+                        TouchData.lookX=0; TouchData.lookY=0; 
+                    }
+                    else if(p.inp.type === 'gamepad') { 
+                        const gp = navigator.getGamepads()[p.inp.index]; 
+                        if(gp) { 
+                            if(Math.abs(gp.axes[0])>0.1) inputX = gp.axes[0]; 
+                            if(Math.abs(gp.axes[1])>0.1) inputZ = gp.axes[1]; 
+                            if(gp.buttons[0].pressed && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
+                            if(Math.abs(gp.axes[2])>0.1) rotY = -gp.axes[2]*0.04; 
+                            if(Math.abs(gp.axes[3])>0.1) rotX = -gp.axes[3]*0.04; 
+                            if(gp.buttons[2].pressed || gp.buttons[7].pressed) attack(i); // X veya R2 saldırı
+                        } 
+                    }
                 }
                 p.obj.rotation.y += rotY; p.rotX = Math.max(-1.5, Math.min(1.5, p.rotX + rotX)); p.cam.rotation.x = p.rotX;
                 const fwd = new THREE.Vector3(0,0,1).applyQuaternion(p.obj.quaternion); fwd.y=0; fwd.normalize(); const rgt = new THREE.Vector3(1,0,0).applyQuaternion(p.obj.quaternion); rgt.y=0; rgt.normalize();
-                const move = new THREE.Vector3(); move.addScaledVector(fwd, inputZ); move.addScaledVector(rgt, inputX); if(move.length()>1) move.normalize();
-                if (move.lengthSq() > 0 && p.onGround && !Sys.isGameOver && now - p.lastStepTime > 450) { playSound('step'); p.lastStepTime = now; }
+                const move = new THREE.Vector3().addScaledVector(fwd, inputZ).addScaledVector(rgt, inputX); if(move.length()>1) move.normalize();
+                
+                // --- ADIM SESİ YÖNETİMİ (OPTIMİZASYON) ---
+                isMoving = move.lengthSq() > 0.01; // Hareket eşiği
+
+                if (isMoving && p.onGround && !Sys.isGameOver && p.stepAudio.paused) {
+                    // Sadece hareket ederken ve zemindeyken başlat
+                    p.stepAudio.play().catch(() => {});
+                } else if ((!isMoving || !p.onGround || Sys.isGameOver) && !p.stepAudio.paused) {
+                    // Durursa, havadaysa veya oyun biterse durdur ve başa al
+                    p.stepAudio.pause();
+                    p.stepAudio.currentTime = 0;
+                }
+                // -----------------------------------------
+
                 p.vel.x = move.x * PHYS.speed; p.vel.z = move.z * PHYS.speed; p.vel.y -= PHYS.gravity * dt;
-                p.obj.position.x += p.vel.x * dt; if(checkCol(p.obj.position)) p.obj.position.x -= p.vel.x * dt; p.obj.position.z += p.vel.z * dt; if(checkCol(p.obj.position)) p.obj.position.z -= p.vel.z * dt; p.obj.position.y += p.vel.y * dt;
-                if(p.obj.position.y < 9.0) { p.obj.position.y = 9.0; p.onGround = true; p.vel.y = 0; } else p.onGround = false;
+                p.obj.position.x += p.vel.x * dt; if(checkCol(p.obj.position)) p.obj.position.x -= p.vel.x * dt;
+                p.obj.position.z += p.vel.z * dt; if(checkCol(p.obj.position)) p.obj.position.z -= p.vel.z * dt;
+                p.obj.position.y += p.vel.y * dt; if(p.obj.position.y < 9.0) { p.obj.position.y = 9.0; p.onGround = true; p.vel.y = 0; } else p.onGround = false;
                 if(p.id === 1) document.getElementById('health-bar').style.width = Math.max(0, p.hp) + '%';
                 if(p.hp <= 0 && !Sys.isGameOver) { Sys.isGameOver = true; document.exitPointerLock(); document.getElementById('game-over-screen').style.display = 'flex'; }
             });
 
             const zSpeed = 5.5;
-            Sys.zombies.forEach(z => {
-                let closest = 999, target = null;
-                Sys.players.forEach(p => { const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
-                if(target && closest < 80) {
-                    z.obj.lookAt(target.obj.position.x, 9, target.obj.position.z);
-                    const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); z.obj.position.addScaledVector(fwd, zSpeed * dt);
-                    if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt);
-                    if(closest < 2.5 && Math.random() < 0.04 && !Sys.isGameOver) { 
-                        target.hp -= 10; playSound('hurt');
-                        const ov = document.getElementById('damage-overlay'); ov.style.opacity = 0.5; setTimeout(()=>ov.style.opacity=0, 100); 
+            // Zombi hareketini her 4. karede bir hesaplayarak CPU yükünü azalt (OPTIMİZASYON)
+            if (frameCount % 4 === 0) { 
+                Sys.zombies.forEach(z => {
+                    let closest = 999, target = null;
+                    Sys.players.forEach(p => { const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
+                    if(target && closest < 80) {
+                        z.obj.lookAt(target.obj.position.x, 9, target.obj.position.z);
+                        const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); z.obj.position.addScaledVector(fwd, zSpeed * dt * 4); // dt'yi 4 ile çarp
+                        if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt * 4); // dt'yi 4 ile çarp
+                        if(closest < 2.5 && Math.random() < 0.04 && !Sys.isGameOver) { 
+                            target.hp -= 10; playSound('hurt');
+                            const ov = document.getElementById('damage-overlay'); ov.style.opacity = 0.5; setTimeout(()=>ov.style.opacity=0, 100); 
+                        }
                     }
-                }
-            });
+                });
+            } else {
+                // Diğer karelerde de hareket etmesi için küçük bir adım at (daha yumuşak hareket)
+                 Sys.zombies.forEach(z => {
+                    let closest = 999, target = null;
+                    Sys.players.forEach(p => { const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
+                    if(target && closest < 80) {
+                        // Basit hareket vektörünü kullan
+                        const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); 
+                        z.obj.position.addScaledVector(fwd, zSpeed * dt);
+                        if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt);
+                    }
+                });
+            }
 
             if(InputMap.p1?.type==='keyboard') { mx=0; my=0; }
             const w=window.innerWidth, h=window.innerHeight;
             Sys.players.forEach((p,i)=>{
                 if(p.model) p.model.visible = false;
                 if(Sys.players.length === 1) { p.cam.aspect=w/h; p.cam.updateProjectionMatrix(); renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(true); renderer.render(scene, p.cam); } 
-                else { const l=i===0?0:w/2; p.cam.aspect=(w/2)/h; p.cam.updateProjectionMatrix(); renderer.setViewport(l,0,w/2,h); renderer.setScissor(l,0,w/2,h); renderer.setScissorTest(true); renderer.render(scene, p.cam); }
+                else { const l=i===0?0:w/2; p.cam.aspect=(w/2)/h; p.cam.updateProjectionMatrix(); renderer.setViewport(l,0,w/2,h); renderer.setScissor(l,0,w/2,h); renderer.setScissorTest(true); renderer.render(scene, p.cam); } // Scissor'da x, y sırasını düzelttim.
                 if(p.model) p.model.visible = true;
             });
         }
