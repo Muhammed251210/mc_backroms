@@ -3,76 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: FULL GAME MECHANICS</title>
+    <title>Backrooms: TARGETING & REWARDS</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
         
         /* UI LAYER */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
-        /* HEALTH BAR */
-        #health-container {
-            position: absolute; top: 20px; left: 20px; width: 200px; height: 20px;
+        /* HEALTH BARS */
+        .stat-bar-container {
+            position: absolute; height: 20px; width: 200px;
             background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; overflow: hidden;
             display: none;
         }
-        #health-bar { width: 100%; height: 100%; background: #ff0000; transition: width 0.2s; }
+        .health-fill { width: 100%; height: 100%; background: #ff0000; transition: width 0.2s; }
         
-        /* BATTERY BAR */
-        #battery-container {
-            position: absolute; top: 50px; left: 20px; width: 200px; height: 10px;
+        /* BATTERY BARS */
+        .battery-bar-container {
+            position: absolute; height: 10px; width: 200px;
             background: rgba(0,0,0,0.5); border: 1px solid #4aa8ff; border-radius: 5px; overflow: hidden;
-            display: none;
+            display: none; 
         }
-        #battery-bar { width: 100%; height: 100%; background: #4aa8ff; transition: width 0.5s; }
-
+        .battery-fill { width: 100%; height: 100%; background: #4aa8ff; transition: width 0.5s; }
 
         /* DAMAGE EFFECT */
         #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: red; opacity: 0; pointer-events: none; transition: opacity 0.1s; z-index: 5; }
 
-        /* CROSSHAIR (YENİ EKLENEN) */
-        #crosshair {
+        /* CROSSHAIR (+) */
+        .crosshair {
             position: absolute;
             top: 50%;
-            left: 50%;
             transform: translate(-50%, -50%);
             width: 20px;
             height: 20px;
             pointer-events: none;
             z-index: 500;
+            display: none;
         }
-        #crosshair:before, #crosshair:after {
-            content: '';
-            position: absolute;
-            background: white;
-        }
-        #crosshair:before { /* Dikey çizgi */
-            width: 2px;
-            height: 100%;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        #crosshair:after { /* Yatay çizgi */
-            height: 2px;
-            width: 100%;
-            top: 50%;
-            left: 0;
-            transform: translateY(-50%);
-        }
+        .crosshair:before, .crosshair:after { content: ''; position: absolute; background: white; }
+        .crosshair:before { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
+        .crosshair:after { height: 2px; width: 100%; top: 50%; left: 0; transform: translateY(-50%); }
 
-        /* OVERLAY SCREENS */
+        /* INDIVIDUAL DEATH SCREENS */
+        .player-gameover {
+            position: absolute; top: 0; height: 100%;
+            background: rgba(50, 0, 0, 0.9); 
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center; color: white; z-index: 200; pointer-events: auto;
+        }
+        .player-gameover h1 { font-size: 40px; margin: 0; text-shadow: 2px 2px 0 #000; color: red; }
+        .player-gameover p { font-size: 20px; margin-top: 10px; color: #ddd; cursor: pointer; text-decoration: underline; }
+
+        /* GLOBAL SCREENS */
         .overlay-screen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column;
-            align-items: center; justify-content: center; color: white; z-index: 100; pointer-events: auto;
+            align-items: center; justify-content: center; color: white; z-index: 300; pointer-events: auto;
         }
-        .overlay-screen h1 { font-size: 50px; margin: 0; text-shadow: 2px 2px 0 #000; }
-        .overlay-screen p { font-size: 20px; margin-top: 10px; color: #ddd; }
         
         #join-alert { position: absolute; top: 20%; width: 100%; text-align: center; color: #00ff00; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 0 #000; display: none; z-index: 150; }
-
-        #pause-screen h1 { color: #ffff55; } #game-over-screen h1 { color: #ff0000; }
+        #pause-screen h1 { color: #ffff55; }
 
         /* CONTROLS */
         #touch-ui { display: none; }
@@ -83,7 +73,6 @@
         #btn-jump { 
             position: absolute; bottom: 60px; right: 40px; width: 90px; height: 90px; border-radius: 50%; 
             background: rgba(200, 200, 200, 0.3); border: 2px solid rgba(255,255,255,0.4); pointer-events: auto; z-index: 30; 
-            /* JUMP YAZISI İÇİN FLEX AYARLARI */
             display: flex; align-items: center; justify-content: center; 
             color: white; font-weight: bold; font-size: 14px;
         }
@@ -102,7 +91,7 @@
             color: black; font-weight: bold; font-size: 12px; 
         }
 
-        /* MENU DESIGN */
+        /* MENU */
         #menu {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: #111; color: #ffea00; z-index: 1000;
@@ -122,21 +111,27 @@
     <div id="damage-overlay"></div>
     <div id="split-line"></div>
     <div id="join-alert">PLAYER 2 JOINED!</div>
-    <div id="crosshair"></div> <div id="fps-counter" style="
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    color: #00ff00;
-    font-family: monospace;
-    font-size: 22px;
-    background: rgba(0,0,0,0.5);
-    padding: 5px 10px;
-    border-radius: 6px;
-    z-index: 6000;
-">0 FPS</div>
+    
+    <div id="crosshair-p1" class="crosshair"></div>
+    <div id="crosshair-p2" class="crosshair"></div>
+
+    <div id="fps-counter" style="position: absolute; top: 10px; right: 10px; color: #00ff00; font-family: monospace; font-size: 22px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 6px; z-index: 6000;">0 FPS</div>
+    
     <div id="ui-layer">
-        <div id="health-container"><div id="health-bar"></div></div>
-        <div id="battery-container"><div id="battery-bar"></div></div>
+        <div id="hp-p1" class="stat-bar-container" style="top: 20px; left: 20px;"><div class="health-fill"></div></div>
+        <div id="bat-p1" class="battery-bar-container" style="top: 50px; left: 20px;"><div class="battery-fill"></div></div>
+        
+        <div id="hp-p2" class="stat-bar-container" style="top: 20px; right: 20px; display: none;"><div class="health-fill"></div></div>
+        <div id="bat-p2" class="battery-bar-container" style="top: 50px; right: 20px; display: none;"><div class="battery-fill"></div></div>
+    </div>
+
+    <div id="go-p1" class="player-gameover">
+        <h1>YOU DIED</h1>
+        <p onclick="window.respawn(0)">Click to Respawn</p>
+    </div>
+    <div id="go-p2" class="player-gameover">
+        <h1>YOU DIED</h1>
+        <p onclick="window.respawn(1)">Click to Respawn</p>
     </div>
 
     <div id="pause-screen" class="overlay-screen" style="display:none;">
@@ -144,16 +139,12 @@
         <p>Press Start to Resume</p>
     </div>
 
-    <div id="game-over-screen" class="overlay-screen" style="display:none;">
-        <h1>YOU DIED!</h1>
-        <p>Click to Respawn</p>
-    </div>
-
     <div id="touch-ui">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
         <div id="touch-right-zone"></div>
         <div id="btn-attack">ATTACK</div>
-        <div id="btn-jump">JUMP</div> <div id="btn-flashlight">LIGHT</div>
+        <div id="btn-jump">JUMP</div> 
+        <div id="btn-flashlight">LIGHT</div>
     </div>
 
     <div id="menu">
@@ -180,7 +171,7 @@
         import * as THREE from 'https://unpkg.com/three@0.126.0/build/three.module.js';
 
         // --- SYSTEM ---
-        const Sys = { mode: 1, players: [], ready: 0, active: false, paused: false, isGameOver: false, zombies: [], items: [] };
+        const Sys = { mode: 1, players: [], ready: 0, active: false, paused: false, zombies: [], items: [] };
         const InputMap = { p1: null, p2: null };
         const P2JoinData = { lastPressTime: 0, presses: 0 };
         const PauseData = { lastState: false };
@@ -189,87 +180,46 @@
         let map = [], mapTypes = [];
         let isAudioContextInitiated = false; 
 
-        // --- FPS COUNTER DATA ---
-        let fps = 0;
-        let frameCount = 0;
-        let lastUpdate = 0;
+        // --- FPS COUNTER ---
+        let fps = 0, frameCount = 0, lastUpdate = 0;
         const fpsElement = document.getElementById('fps-counter');
 
-        // --- SOUNDS (3D Audio and Base Sounds) ---
+        // --- SOUNDS ---
         const Sounds = {};
-        let audioListener;
-        let audioLoader;
-        const audioFiles = { 
-            jump: './sounds/jump.mp3', 
-            attack: './sounds/attack.mp3', 
-            hurt: './sounds/hurt.mp3', 
-        };
+        let audioListener, audioLoader;
+        const audioFiles = { jump: './sounds/jump.mp3', attack: './sounds/attack.mp3', hurt: './sounds/hurt.mp3' };
         const musicFiles = ['./sounds/LivingMice.mp3', './sounds/MoogCity.mp3', './sounds/SubwooferLullaby.mp3'];
         let currentMusic = null;
 
         function loadSounds() {
             if (!isAudioContextInitiated) return;
-            // Listener and Loader for 3D audio
             audioListener = new THREE.AudioListener();
             audioLoader = new THREE.AudioLoader();
-            
-            // Load base sounds
             for (const [key, path] of Object.entries(audioFiles)) {
                 const audio = new Audio(path); audio.volume = 0.4; Sounds[key] = audio;
             }
         }
 
-        // --- 3D POSITIONAL SOUND FUNCTION ---
         function playPositionalSound(object, path, volume = 0.6, loop = false) {
             if (!audioListener || !audioLoader) return;
             const sound = new THREE.PositionalAudio(audioListener);
             sound.setVolume(volume);
             sound.setLoop(loop);
             sound.setRefDistance(15); 
-
-            audioLoader.load(path, function(buffer) {
-                sound.setBuffer(buffer);
-                object.add(sound); 
-                sound.play();
-            });
+            audioLoader.load(path, function(buffer) { sound.setBuffer(buffer); object.add(sound); sound.play(); });
             return sound;
         }
 
-        function playClick() {
-            try {
-                const clickAudio = new Audio('./sounds/click.mp3');
-                clickAudio.volume = 1.0; 
-                clickAudio.play().catch(()=>{});
-            } catch (e) {}
-        }
-
-        function playSound(name) {
-            if (Sounds[name] && Sys.active && !Sys.paused) {
-                const audio = Sounds[name].cloneNode(); 
-                audio.play().catch(()=>{});
-            }
-        }
-        
+        function playClick() { try { const a = new Audio('./sounds/click.mp3'); a.volume=1.0; a.play().catch(()=>{}); } catch(e){} }
+        function playSound(name) { if (Sounds[name] && Sys.active && !Sys.paused) { const a = Sounds[name].cloneNode(); a.play().catch(()=>{}); } }
         function playRandomMusic() {
             if(currentMusic || !isAudioContextInitiated) return;
             const track = musicFiles[Math.floor(Math.random()*musicFiles.length)];
             currentMusic = new Audio(track); currentMusic.volume = 0.3;
-            currentMusic.loop = false;
-            
             currentMusic.play().catch(() => { currentMusic = null; });
-            
-            currentMusic.onended = () => { 
-                currentMusic = null; 
-                setTimeout(playRandomMusic, Math.random() * 60000 + 30000); 
-            };
+            currentMusic.onended = () => { currentMusic = null; setTimeout(playRandomMusic, Math.random() * 60000 + 30000); };
         }
-        
-        function initAudioContext() {
-            if (isAudioContextInitiated) return;
-            isAudioContextInitiated = true;
-            loadSounds();
-            if (Sys.active) playRandomMusic();
-        }
+        function initAudioContext() { if (isAudioContextInitiated) return; isAudioContextInitiated = true; loadSounds(); if (Sys.active) playRandomMusic(); }
 
         document.querySelectorAll('.btn, button').forEach(el => {
             el.addEventListener('click', initAudioContext, { once: true });
@@ -283,7 +233,7 @@
         document.getElementById('btn-touch-sel').addEventListener('click', () => { playClick(); assignTouch(); });
 
 
-        // --- TEXTURES / MATERIALS ---
+        // --- TEXTURES ---
         const tl = new THREE.TextureLoader();
         function loadTex(path, repeatY) {
             const t = tl.load(path); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
@@ -291,54 +241,24 @@
             if (repeatY > 1) t.repeat.set(1, repeatY);
             return t;
         }
-
-        const texMain = { 
-            base: loadTex('./photos/hardened_clay_stained_magenta.png', 7), glass: loadTex('./photos/glass_orange.png', 7),
-            var1: loadTex('./photos/hardened_clay_stained_magenta_1.png', 7), var2: loadTex('./photos/hardened_clay_stained_magenta_2.png', 7),
-            pink: loadTex('./photos/hardened_clay_stained_pink.png', 7), pink1: loadTex('./photos/hardened_clay_stained_pink_1.png', 7)
-        };
-        const texRare = {
-            acacia: loadTex('./photos/acacia_trapdoor.png', 7), brick: loadTex('./photos/brick.png', 7),
-            cobble: loadTex('./photos/cobblestone.png', 7), mossy: loadTex('./photos/cobblestone_mossy.png', 7)
-        };
-        const texFloor = {
-            main: loadTex('./photos/hardened_clay_stained_magenta.png', 1), deepslate: loadTex('./photos/cracked_deepslate_bricks.png', 1),
-            ceil: loadTex('./photos/acacia_trapdoor.png', 1)
-        };
-
+        const texMain = { base: loadTex('./photos/hardened_clay_stained_magenta.png', 7), glass: loadTex('./photos/glass_orange.png', 7) };
+        const texFloor = { main: loadTex('./photos/hardened_clay_stained_magenta.png', 1), ceil: loadTex('./photos/acacia_trapdoor.png', 1) };
         const matList = {
-            mainBase: new THREE.MeshLambertMaterial({ map: texMain.base }), mainGlass: new THREE.MeshLambertMaterial({ map: texMain.glass, transparent: true, opacity: 0.9 }),
-            mainVar1: new THREE.MeshLambertMaterial({ map: texMain.var1 }), mainVar2: new THREE.MeshLambertMaterial({ map: texMain.var2 }),
-            mainPink: new THREE.MeshLambertMaterial({ map: texMain.pink }), mainPink1: new THREE.MeshLambertMaterial({ map: texMain.pink1 }),
-            rareAcacia: new THREE.MeshLambertMaterial({ map: texRare.acacia }), rareBrick: new THREE.MeshLambertMaterial({ map: texRare.brick }),
-            rareCobble: new THREE.MeshLambertMaterial({ map: texRare.cobble }), rareMossy: new THREE.MeshLambertMaterial({ map: texRare.mossy }),
-            floorMain: new THREE.MeshLambertMaterial({ map: texFloor.main }), floorRare: new THREE.MeshLambertMaterial({ map: texFloor.deepslate }),
+            mainBase: new THREE.MeshLambertMaterial({ map: texMain.base }), 
+            mainGlass: new THREE.MeshLambertMaterial({ map: texMain.glass, transparent: true, opacity: 0.9 }),
+            floorMain: new THREE.MeshLambertMaterial({ map: texFloor.main }), 
             ceil: new THREE.MeshLambertMaterial({ map: texFloor.ceil }),
             battery: new THREE.MeshBasicMaterial({ color: 0xffcc00, wireframe: false })
         };
-        const wallsMain = [matList.mainBase, matList.mainBase, matList.mainBase, matList.mainGlass, matList.mainVar1, matList.mainVar2, matList.mainPink, matList.mainPink1];
-        const wallsRare = [matList.rareAcacia, matList.rareBrick, matList.rareCobble, matList.rareMossy];
-        
-        // --- CHARACTER MODEL (Humanoid) ---
+
+        // --- CHARACTER ---
         function createHumanoid(isZombie) {
             const group = new THREE.Group();
             const cSkin = isZombie ? 0x4a6b4a : 0xffccaa; const cShirt = isZombie ? 0x3d5c5c : 0x00aaaa; 
-            const cPants = isZombie ? 0x2a2a5c : 0x0000aa; const cEyeW = isZombie ? 0x111111 : 0xffffff;
-            const cEyeP = isZombie ? 0x000000 : 0x0000ff; const cMouth = isZombie ? 0x220000 : 0x663333;
-
+            const cPants = isZombie ? 0x2a2a5c : 0x0000aa;
             const matSkin = new THREE.MeshLambertMaterial({ color: cSkin }); const matShirt = new THREE.MeshLambertMaterial({ color: cShirt });
-            const matPants = new THREE.MeshLambertMaterial({ color: cPants }); const matEyeW = new THREE.MeshLambertMaterial({ color: cEyeW });
-            const matPupil = new THREE.MeshLambertMaterial({ color: cEyeP }); const matMouth = new THREE.MeshLambertMaterial({ color: cMouth });
-
-            const head = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), matSkin); head.position.y = 8.25;
-            const eyeGeo = new THREE.BoxGeometry(0.6, 0.6, 0.1); const pupilGeo = new THREE.BoxGeometry(0.3, 0.3, 0.11);
-            const lEye = new THREE.Mesh(eyeGeo, matEyeW); lEye.position.set(-0.7, 0.3, 1.26);
-            const lPupil = new THREE.Mesh(pupilGeo, matPupil); lPupil.position.set(0, 0, 0.05); lEye.add(lPupil); head.add(lEye);
-            const rEye = new THREE.Mesh(eyeGeo, matEyeW); rEye.position.set(0.7, 0.3, 1.26);
-            const rPupil = new THREE.Mesh(pupilGeo, matPupil); rPupil.position.set(0, 0, 0.05); rEye.add(rPupil); head.add(rEye);
-            const mouth = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 0.1), matMouth); mouth.position.set(0, -0.6, 1.26); head.add(mouth);
-            group.add(head);
-
+            const matPants = new THREE.MeshLambertMaterial({ color: cPants });
+            const head = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), matSkin); head.position.y = 8.25; group.add(head);
             const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.5, 1.3), matShirt); body.position.y = 5.25; group.add(body);
             const armGeo = new THREE.BoxGeometry(1, 3.5, 1);
             const rArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin); rArm.position.set(1.9, 5.25, 0); 
@@ -358,8 +278,19 @@
         };
         window.assignTouch = () => assign('touch', 0);
         function checkInput() { if(Sys.active) return; const gps = navigator.getGamepads ? navigator.getGamepads() : []; for(let i=0; i<gps.length; i++) { if(gps[i] && gps[i].buttons.some(b=>b.pressed)) assign('gamepad', i); } requestAnimationFrame(checkInput); }
-        const keys = {}; window.addEventListener('keydown', e => { keys[e.code] = true; if(!Sys.active && ['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); if(Sys.active && e.code === 'KeyF') attack(0); if(Sys.active && e.code === 'KeyL') toggleFlashlight(Sys.players[0]); if(Sys.isGameOver) resetGame(); }); window.addEventListener('keyup', e => keys[e.code] = false);
-        document.getElementById('game-over-screen').onclick = resetGame;
+        const keys = {}; window.addEventListener('keydown', e => { keys[e.code] = true; if(!Sys.active && ['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); if(Sys.active && e.code === 'KeyF') attack(0); if(Sys.active && e.code === 'KeyL') toggleFlashlight(Sys.players[0]); }); window.addEventListener('keyup', e => keys[e.code] = false);
+        
+        // RESPAWN FUNCTION
+        window.respawn = (pIdx) => {
+            if(Sys.players[pIdx]) {
+                const p = Sys.players[pIdx];
+                p.hp = 100; p.battery = 100; p.isDead = false;
+                p.obj.position.set(p.id===1?-5:5, 9, 0);
+                document.getElementById(pIdx===0 ? 'go-p1' : 'go-p2').style.display = 'none';
+                document.getElementById(pIdx===0 ? 'crosshair-p1' : 'crosshair-p2').style.display = 'block';
+                if(p.inp.type === 'keyboard') document.body.requestPointerLock();
+            }
+        };
 
         function assign(type, idx) {
             if(Sys.ready >= Sys.mode) return;
@@ -375,8 +306,35 @@
         // --- START GAME ---
         window.startGame = () => {
             document.getElementById('menu').style.display = 'none';
-            document.getElementById('health-container').style.display = 'block';
-            document.getElementById('battery-container').style.display = 'block';
+            
+            // UI Ayarları
+            const c1 = document.getElementById('crosshair-p1');
+            const c2 = document.getElementById('crosshair-p2');
+            const p1GO = document.getElementById('go-p1');
+            const p2GO = document.getElementById('go-p2');
+
+            // P1 UI
+            document.getElementById('hp-p1').style.display = 'block';
+            document.getElementById('bat-p1').style.display = 'block';
+            c1.style.display = 'block';
+
+            if(Sys.mode === 2) {
+                // 2 Kişilik Mod
+                c1.style.left = '25%'; 
+                c2.style.display = 'block';
+                c2.style.left = '75%'; 
+                
+                document.getElementById('hp-p2').style.display = 'block';
+                document.getElementById('bat-p2').style.display = 'block';
+
+                p1GO.style.width = '50%'; p1GO.style.left = '0';
+                p2GO.style.width = '50%'; p2GO.style.left = '50%';
+            } else {
+                // Tek Kişilik Mod
+                c1.style.left = '50%';
+                p1GO.style.width = '100%'; p1GO.style.left = '0';
+            }
+
             if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
             if(InputMap.p1?.type==='touch' || InputMap.p2?.type==='touch') initTouch();
             if(InputMap.p1?.type==='keyboard' || InputMap.p2?.type==='keyboard') document.body.requestPointerLock();
@@ -388,7 +346,6 @@
         function initEngine() {
             Sys.active = true; clock = new THREE.Clock(); scene = new THREE.Scene();
             scene.background = new THREE.Color(0x503050); scene.fog = new THREE.FogExp2(0x503050, 0.035);
-            // FIX: Ambient light increased slightly to prevent pure black blocks
             const light = new THREE.AmbientLight(0xffffff, 0.2); scene.add(light); 
             renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.autoClear = false; document.body.appendChild(renderer.domElement);
             
@@ -397,115 +354,66 @@
             if(InputMap.p2) { createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display='block'; }
             
             if (audioListener && Sys.players[0]) Sys.players[0].cam.add(audioListener);
-
-            setInterval(trySpawnZombies, 10000); 
-            setInterval(trySpawnItems, 30000); 
-            
+            setInterval(trySpawnZombies, 10000); setInterval(trySpawnItems, 30000); 
             animate();
         }
 
-        // --- WORLD GENERATION (Fixed Block Visibility) ---
         function generateWorld() {
-            const geo = new THREE.BoxGeometry(BS, BS*7, BS); 
-            const pln = new THREE.PlaneGeometry(BS, BS);
-            
+            const geo = new THREE.BoxGeometry(BS, BS*7, BS); const pln = new THREE.PlaneGeometry(BS, BS);
             for(let x=0; x<WS; x++) { mapTypes[x] = []; map[x] = []; for(let z=0; z<WS; z++) mapTypes[x][z] = 0; }
             for(let i=0; i<3; i++) { const rx = Math.floor(Math.random()*(WS-10))+5; const rz = Math.floor(Math.random()*(WS-10))+5; for(let x=rx-2; x<=rx+2; x++) for(let z=rz-2; z<=rz+2; z++) mapTypes[x][z] = 1; }
-            
-            for(let x=0; x<WS; x++) {
-                for(let z=0; z<WS; z++) {
-                    const px = (x-WS/2)*BS, pz = (z-WS/2)*BS; const isRare = (mapTypes[x][z] === 1);
-                    
-                    // Floor/Ceiling
-                    const floorMat = isRare ? matList.floorRare : matList.floorMain;
-                    const f = new THREE.Mesh(pln, floorMat); f.rotation.x = -Math.PI/2; f.position.set(px,0,pz); scene.add(f);
-                    const c = new THREE.Mesh(pln, matList.ceil); c.rotation.x = Math.PI/2; c.position.set(px,BS*7,pz); scene.add(c);
-
-                    // Wall
-                    let w = (x===0||x===WS-1||z===0||z===WS-1) || (Math.random()<0.1 && Math.abs(x-WS/2)>2 && Math.abs(z-WS/2)>2);
-                    if(w) {
-                        map[x][z] = 1; 
-                        let wallMat;
-                        if(isRare) wallMat = wallsRare[Math.floor(Math.random()*wallsRare.length)];
-                        else { const rnd = Math.random(); if(rnd < 0.10) wallMat = matList.mainGlass; else if(rnd < 0.30) wallMat = wallsMain[Math.floor(Math.random()*wallsMain.length)]; else wallMat = matList.mainBase; }
-                        const b = new THREE.Mesh(geo, wallMat); b.position.set(px,BS*3.5,pz); scene.add(b);
-                    } else map[x][z] = 0;
-                }
-            }
+            for(let x=0; x<WS; x++) { for(let z=0; z<WS; z++) {
+                const px = (x-WS/2)*BS, pz = (z-WS/2)*BS; const isRare = (mapTypes[x][z] === 1);
+                const f = new THREE.Mesh(pln, matList.floorMain); f.rotation.x = -Math.PI/2; f.position.set(px,0,pz); scene.add(f);
+                const c = new THREE.Mesh(pln, matList.ceil); c.rotation.x = Math.PI/2; c.position.set(px,BS*7,pz); scene.add(c);
+                let w = (x===0||x===WS-1||z===0||z===WS-1) || (Math.random()<0.1 && Math.abs(x-WS/2)>2 && Math.abs(z-WS/2)>2);
+                if(w) {
+                    map[x][z] = 1; 
+                    let wallMat = (Math.random()<0.10) ? matList.mainGlass : matList.mainBase;
+                    const b = new THREE.Mesh(geo, wallMat); b.position.set(px,BS*3.5,pz); scene.add(b);
+                } else map[x][z] = 0;
+            }}
         }
         
-        // --- BATTERY OBJECT CREATION ---
         function createBattery() {
-            const g = new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16);
-            const m = matList.battery;
-            const mesh = new THREE.Mesh(g, m);
-            mesh.rotation.x = Math.PI/2;
-            const item = { type: 'battery', obj: mesh };
-            return item;
+            const g = new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16); const m = matList.battery;
+            const mesh = new THREE.Mesh(g, m); mesh.rotation.x = Math.PI/2;
+            return { type: 'battery', obj: mesh };
         }
-
-        // --- ITEM SPAWN MECHANIC ---
         function trySpawnItems() {
-            if(Sys.isGameOver || Sys.paused || Sys.items.length >= 5) return;
+            if(Sys.paused || Sys.items.length >= 5) return;
             const rx = Math.floor(Math.random()*WS), rz = Math.floor(Math.random()*WS);
             const px = (rx-WS/2)*BS, pz = (rz-WS/2)*BS;
             if(map[rx][rz] === 0) {
                 let safe = true; Sys.players.forEach(p => { if(p.obj.position.distanceTo(new THREE.Vector3(px,9,pz)) < 5) safe = false; });
-                if(safe) {
-                    const item = createBattery();
-                    item.obj.position.set(px, 9.5, pz);
-                    scene.add(item.obj);
-                    Sys.items.push(item);
-                }
+                if(safe) { const item = createBattery(); item.obj.position.set(px, 9.5, pz); scene.add(item.obj); Sys.items.push(item); }
             }
         }
-
 
         function createPlayer(id, inp) {
             const o = new THREE.Object3D(); 
-            const c = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100); 
-            o.add(c);
-            
-            // Flashlight (initially off)
+            const c = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100); o.add(c);
             const flashlight = new THREE.SpotLight(0xffcc88, 0, 40, Math.PI/6, 0.5, 0.5);
-            flashlight.position.set(0, 0, 0); 
-            flashlight.target.position.set(0, 0, -1);
-            c.add(flashlight);
-            c.add(flashlight.target);
-            
+            flashlight.position.set(0, 0, 0); flashlight.target.position.set(0, 0, -1); c.add(flashlight); c.add(flashlight.target);
             const steve = createHumanoid(false); steve.position.y = -9.0; o.add(steve);
             const l = new THREE.PointLight(0xffaa00, 0.0, 15); l.position.set(0,0,0); o.add(l);
             o.position.set(id===1?-5:5, 9, 0); scene.add(o);
-            
-            const stepAudio = new Audio('./sounds/step.mp3');
-            stepAudio.loop = true;
-            stepAudio.volume = 0.2;
-
+            const stepAudio = new Audio('./sounds/step.mp3'); stepAudio.loop = true; stepAudio.volume = 0.2;
             Sys.players.push({ 
-                id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(), onGround: false, hp: 100, 
-                model: steve, stepAudio: stepAudio, 
-                battery: 100, isFlashlightOn: false, flashlight: flashlight, 
-                cameraY: c.position.y 
+                id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(), onGround: false, hp: 100, isDead: false,
+                model: steve, stepAudio: stepAudio, battery: 100, isFlashlightOn: false, flashlight: flashlight, cameraY: c.position.y 
             });
         }
 
-        // --- FLASHLIGHT TOGGLE FUNCTION ---
         function toggleFlashlight(player) {
             if (player.battery <= 0 && !player.isFlashlightOn) return; 
-
             player.isFlashlightOn = !player.isFlashlightOn;
-            
-            if (player.isFlashlightOn) {
-                player.flashlight.intensity = 1.5; 
-                if (player.battery <= 0) player.battery = 1; 
-            } else {
-                player.flashlight.intensity = 0; 
-            }
+            if (player.isFlashlightOn) { player.flashlight.intensity = 1.5; if (player.battery <= 0) player.battery = 1; } 
+            else { player.flashlight.intensity = 0; }
         }
 
-
         function trySpawnZombies() {
-            if(Sys.isGameOver || Sys.paused || Sys.zombies.length >= 15) return;
+            if(Sys.paused || Sys.zombies.length >= 15) return;
             let spawned = 0, attempts = 0;
             while(spawned < 3 && attempts < 50) {
                 attempts++; const rx = Math.floor(Math.random()*WS), rz = Math.floor(Math.random()*WS);
@@ -515,10 +423,7 @@
                     if(safe) {
                         const zObj = new THREE.Object3D(); const zModel = createHumanoid(true); zModel.position.y = -9.0; zObj.add(zModel);
                         zObj.position.set(px, 9, pz); scene.add(zObj); 
-                        
-                        // 3D POSITIONAL AUDIO
                         const zombieSound = playPositionalSound(zObj, './sounds/zombie.mp3', 0.6, true);
-
                         Sys.zombies.push({ obj: zObj, hp: 3, sound: zombieSound });
                         spawned++; 
                     }
@@ -527,39 +432,55 @@
         }
 
         function attack(pIdx) {
-            if(!Sys.players[pIdx] || Sys.paused) return;
+            if(!Sys.players[pIdx] || Sys.paused || Sys.players[pIdx].isDead) return;
             const p = Sys.players[pIdx]; p.cam.position.y -= 0.2; setTimeout(()=>p.cam.position.y+=0.2, 50);
             let hit = false;
+            
+            // Oyuncunun baktığı yön (Forward vector)
+            const pDir = new THREE.Vector3(0, 0, -1).applyQuaternion(p.cam.quaternion).normalize();
+
             for(let i=0; i<Sys.zombies.length; i++) {
                 const z = Sys.zombies[i];
-                if(z.obj.position.distanceTo(p.obj.position) < 25) {
+                
+                // Zombiye olan vektör
+                const toZombie = z.obj.position.clone().sub(p.obj.position);
+                const dist = toZombie.length();
+                toZombie.normalize();
+
+                // Dot product hesabı: Eğer 1'e yakınsa tam bakıyordur.
+                const dot = pDir.dot(toZombie);
+
+                // Vuruş koşulu: Mesafe < 25 VE Bakış açısı çok dar (Dot > 0.9)
+                if(dist < 25 && dot > 0.9) {
                     z.hp--; hit=true; playSound('attack'); playSound('hurt');
                     z.obj.children[0].children.forEach(m => { if(m.material.color) m.material.color.setHex(0xff0000); });
                     setTimeout(() => { if(z.obj) z.obj.children[0].children.forEach((m,k) => { const def = (k===0)?0x4a6b4a:(k===4||k===5||k===6)?0x3d5c5c:(k===7||k===8)?0x2a2a5c:0x111111; if(m.material.color) m.material.color.setHex(def); }); }, 100);
                     const k = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(5); z.obj.position.add(k);
-                    if(z.hp <= 0) { scene.remove(z.obj); if(z.sound) z.sound.stop(); Sys.zombies.splice(i, 1); } break;
+                    
+                    if(z.hp <= 0) { 
+                        scene.remove(z.obj); if(z.sound) z.sound.stop(); Sys.zombies.splice(i, 1); 
+                        // ÖDÜL SİSTEMİ: +25 Can
+                        p.hp += 25; 
+                    } 
+                    break;
                 }
             }
+            // Friendly Fire (Arkadaş vurma) hala mesafe bazlı kalsın mı? Hayır, onu da nişangaha göre yapalım.
             if(!hit && Sys.mode===2) {
-                Sys.players.forEach((t, ti) => { if(ti!==pIdx && t.obj.position.distanceTo(p.obj.position)<25) { t.hp-=10; hit=true; playSound('attack'); playSound('hurt'); const k = new THREE.Vector3().subVectors(t.obj.position, p.obj.position).normalize().multiplyScalar(8); t.obj.position.add(k); t.obj.position.y+=2; t.onGround=false; if(t.id===1) { const ov=document.getElementById('damage-overlay'); ov.style.opacity=0.5; setTimeout(()=>ov.style.opacity=0, 100); } } });
+                Sys.players.forEach((t, ti) => { 
+                    if(ti!==pIdx && !t.isDead) {
+                        const toT = t.obj.position.clone().sub(p.obj.position);
+                        const dist = toT.length();
+                        toT.normalize();
+                        const dot = pDir.dot(toT);
+                        if(dist < 25 && dot > 0.9) { 
+                            t.hp-=10; hit=true; playSound('attack'); playSound('hurt'); 
+                            const k = new THREE.Vector3().subVectors(t.obj.position, p.obj.position).normalize().multiplyScalar(8); t.obj.position.add(k); t.obj.position.y+=2; t.onGround=false; 
+                            if(t.id===1) { const ov=document.getElementById('damage-overlay'); ov.style.opacity=0.5; setTimeout(()=>ov.style.opacity=0, 100); } 
+                        } 
+                    }
+                });
             }
-        }
-
-        function resetGame() { 
-            if(!Sys.isGameOver) return; 
-            Sys.isGameOver = false; 
-            Sys.players.forEach(p => { 
-                p.hp = 100; p.battery = 100; p.obj.position.set(p.id===1?-5:5, 9, 0); 
-                p.isFlashlightOn = false; p.flashlight.intensity = 0;
-            }); 
-            document.getElementById('health-bar').style.width = '100%'; 
-            document.getElementById('battery-bar').style.width = '100%'; 
-            Sys.zombies.forEach(z => { scene.remove(z.obj); if(z.sound) z.sound.stop(); }); 
-            Sys.zombies = []; 
-            Sys.items.forEach(i => scene.remove(i.obj));
-            Sys.items = [];
-            document.getElementById('game-over-screen').style.display = 'none'; 
-            if(InputMap.p1 && InputMap.p1.type==='keyboard') document.body.requestPointerLock(); 
         }
 
         function joinPlayer2(gpIndex) { if(Sys.mode === 2) return; Sys.mode = 2; InputMap.p2 = { type: 'gamepad', index: gpIndex }; createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display = 'block'; document.getElementById('join-alert').style.display = 'block'; setTimeout(()=>document.getElementById('join-alert').style.display='none', 3000); if(InputMap.p1.type === 'touch') { document.getElementById('touch-ui').style.width = '50%'; document.getElementById('touch-ui').style.left = '0'; } }
@@ -598,7 +519,6 @@
             lookZone.addEventListener('touchend', e => { for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) TouchData.lookID = null; } }); 
             jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.jump = true; }); jumpBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.jump = false; }); 
             attackBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.attack = true; }); attackBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.attack = false; }); 
-            // El feneri dokunmatik tuşu
             flashlightBtn.addEventListener('touchstart', e => { e.preventDefault(); toggleFlashlight(Sys.players[0]); }); 
         }
 
@@ -611,136 +531,124 @@
         function animate() {
             requestAnimationFrame(animate); handleGamepad();
 
-            // --- FPS COUNTER UPDATE ---
-            const now = Date.now();
-            frameCount++;
-            if (now - lastUpdate > 1000) {
-                fps = frameCount;
-                fpsElement.innerText = `${fps} FPS`;
-                frameCount = 0;
-                lastUpdate = now;
-            }
-            // ---------------------------------------------
+            // FPS
+            const now = Date.now(); frameCount++;
+            if (now - lastUpdate > 1000) { fps = frameCount; fpsElement.innerText = `${fps} FPS`; frameCount = 0; lastUpdate = now; }
 
             if(Sys.paused) return;
             const dt = Math.min(clock.getDelta(), 0.1); 
 
             Sys.players.forEach((p, i) => {
+                if (p.isDead) return; 
+
                 let inputX = 0, inputZ = 0, rotY = 0, rotX = 0;
                 let isMoving = false; 
 
-                if(!Sys.isGameOver) {
-                    if(p.inp.type === 'keyboard') { 
-                        if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1; 
-                        if(keys['KeyA']) inputX = -1; if(keys['KeyD']) inputX = 1; 
-                        if(keys['Space'] && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
-                        rotY = -mx * 0.006; rotX = -my * 0.006; 
-                        if(keys['KeyE'] || keys['KeyR']) attack(i); 
-                        // El feneri klavye tuşu (L)
-                        if(keys['KeyL']) { toggleFlashlight(Sys.players[0]); keys['KeyL'] = false; } 
-                    }
-                    else if(p.inp.type === 'touch') { 
-                        inputX = TouchData.moveX; inputZ = TouchData.moveZ; 
-                        if(TouchData.jump && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
-                        rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed; 
-                        if(TouchData.attack) { attack(i); TouchData.attack = false; } 
-                        TouchData.lookX=0; TouchData.lookY=0; 
-                    }
-                    else if(p.inp.type === 'gamepad') { 
-                        const gp = navigator.getGamepads()[p.inp.index]; 
-                        if(gp) { 
-                            if(Math.abs(gp.axes[0])>0.1) inputX = gp.axes[0]; 
-                            if(Math.abs(gp.axes[1])>0.1) inputZ = gp.axes[1]; 
-                            if(gp.buttons[0].pressed && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
-                            if(Math.abs(gp.axes[2])>0.1) rotY = -gp.axes[2]*0.04; 
-                            if(Math.abs(gp.axes[3])>0.1) rotX = -gp.axes[3]*0.04; 
-                            if(gp.buttons[2].pressed || gp.buttons[7].pressed) attack(i);
-                            // El feneri gamepad tuşu (B - Xbox)
-                            if(gp.buttons[1].pressed && !Sys.paused) toggleFlashlight(Sys.players[0]);
-                        } 
-                    }
+                if(p.inp.type === 'keyboard') { 
+                    if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1; 
+                    if(keys['KeyA']) inputX = -1; if(keys['KeyD']) inputX = 1; 
+                    if(keys['Space'] && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
+                    rotY = -mx * 0.006; rotX = -my * 0.006; 
+                    if(keys['KeyE'] || keys['KeyR']) attack(i); 
+                    if(keys['KeyL']) { toggleFlashlight(Sys.players[0]); keys['KeyL'] = false; } 
+                }
+                else if(p.inp.type === 'touch') { 
+                    inputX = TouchData.moveX; inputZ = TouchData.moveZ; 
+                    if(TouchData.jump && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
+                    rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed; 
+                    if(TouchData.attack) { attack(i); TouchData.attack = false; } 
+                    TouchData.lookX=0; TouchData.lookY=0; 
+                }
+                else if(p.inp.type === 'gamepad') { 
+                    const gp = navigator.getGamepads()[p.inp.index]; 
+                    if(gp) { 
+                        if(Math.abs(gp.axes[0])>0.1) inputX = gp.axes[0]; 
+                        if(Math.abs(gp.axes[1])>0.1) inputZ = gp.axes[1]; 
+                        if(gp.buttons[0].pressed && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
+                        if(Math.abs(gp.axes[2])>0.1) rotY = -gp.axes[2]*0.04; 
+                        if(Math.abs(gp.axes[3])>0.1) rotX = -gp.axes[3]*0.04; 
+                        if(gp.buttons[2].pressed || gp.buttons[7].pressed) attack(i);
+                        if(gp.buttons[1].pressed && !Sys.paused) toggleFlashlight(Sys.players[0]);
+                    } 
                 }
                 
                 p.obj.rotation.y += rotY; p.rotX = Math.max(-1.5, Math.min(1.5, p.rotX + rotX)); p.cam.rotation.x = p.rotX;
                 const fwd = new THREE.Vector3(0,0,1).applyQuaternion(p.obj.quaternion); fwd.y=0; fwd.normalize(); const rgt = new THREE.Vector3(1,0,0).applyQuaternion(p.obj.quaternion); rgt.y=0; rgt.normalize();
                 const move = new THREE.Vector3().addScaledVector(fwd, inputZ).addScaledVector(rgt, inputX); if(move.length()>1) move.normalize();
                 
-                // --- STEP SOUND and HEADBOB ---
+                // Step Sound & Headbob
                 isMoving = move.lengthSq() > 0.01;
-
-                if (isMoving && p.onGround && !Sys.isGameOver) {
+                if (isMoving && p.onGround) {
                     if (p.stepAudio.paused) p.stepAudio.play().catch(() => {});
                     headbobTime += dt * 8; 
                     p.cam.position.y = p.cameraY + Math.sin(headbobTime) * 0.15; 
                     p.cam.position.x = Math.cos(headbobTime / 2) * 0.1; 
                 } else {
                     if (!p.stepAudio.paused) { p.stepAudio.pause(); p.stepAudio.currentTime = 0; }
-                    p.cam.position.y = p.cameraY; 
-                    p.cam.position.x = 0;
-                    headbobTime = 0;
+                    p.cam.position.y = p.cameraY; p.cam.position.x = 0; headbobTime = 0;
                 }
-                // ---------------------------------------------
                 
-                // --- BATTERY MANAGEMENT ---
+                // Battery
                 if (p.isFlashlightOn) {
-                    p.battery -= dt * 3; // Işık açıkken pil tüketimi
-                    if (p.battery <= 0) {
-                        p.battery = 0;
-                        toggleFlashlight(p); 
-                    }
-                } else if (p.battery < 100) {
-                    // Işık kapalıyken şarj
-                    p.battery += dt * 1; 
-                }
-
+                    p.battery -= dt * 3; 
+                    if (p.battery <= 0) { p.battery = 0; toggleFlashlight(p); }
+                } else if (p.battery < 100) { p.battery += dt * 1; }
                 p.battery = Math.min(100, Math.max(0, p.battery)); 
-                if (p.id === 1) document.getElementById('battery-bar').style.width = p.battery + '%';
+                
+                // Update UI Bars (Clamp visual at 100% but allow value > 100)
+                const hpBar = document.querySelector(`#hp-p${p.id} .health-fill`);
+                const batBar = document.querySelector(`#bat-p${p.id} .battery-fill`);
+                if(hpBar) hpBar.style.width = Math.min(100, Math.max(0, p.hp)) + '%'; 
+                if(batBar) batBar.style.width = p.battery + '%';
 
                 p.vel.x = move.x * PHYS.speed; p.vel.z = move.z * PHYS.speed; p.vel.y -= PHYS.gravity * dt;
                 p.obj.position.x += p.vel.x * dt; if(checkCol(p.obj.position)) p.obj.position.x -= p.vel.x * dt;
                 p.obj.position.z += p.vel.z * dt; if(checkCol(p.obj.position)) p.obj.position.z -= p.vel.z * dt;
                 p.obj.position.y += p.vel.y * dt; if(p.obj.position.y < 9.0) { p.obj.position.y = 9.0; p.onGround = true; p.vel.y = 0; } else p.onGround = false;
-                if(p.id === 1) document.getElementById('health-bar').style.width = Math.max(0, p.hp) + '%';
-                if(p.hp <= 0 && !Sys.isGameOver) { Sys.isGameOver = true; document.exitPointerLock(); document.getElementById('game-over-screen').style.display = 'flex'; }
+                
+                if(p.hp <= 0) { 
+                    p.isDead = true; 
+                    if(p.inp.type === 'keyboard') document.exitPointerLock(); 
+                    document.getElementById(i===0 ? 'go-p1' : 'go-p2').style.display = 'flex';
+                    document.getElementById(i===0 ? 'crosshair-p1' : 'crosshair-p2').style.display = 'none';
+                }
 
-                // --- ITEM COLLECTION (Battery) ---
+                // Items
                 for (let j = Sys.items.length - 1; j >= 0; j--) {
                     const item = Sys.items[j];
                     if (item.obj.position.distanceTo(p.obj.position) < 3) {
                         if (item.type === 'battery' && p.battery < 100) {
-                            p.battery = 100;
-                            scene.remove(item.obj);
-                            Sys.items.splice(j, 1);
+                            p.battery = 100; scene.remove(item.obj); Sys.items.splice(j, 1);
                         }
                     }
                 }
             });
 
             const zSpeed = 5.5;
-            // Zombie AI (Optimized to run pathfinding/major calculations every 4th frame)
             if (frameCount % 4 === 0) { 
                 Sys.zombies.forEach(z => {
                     let closest = 999, target = null;
-                    Sys.players.forEach(p => { const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
+                    Sys.players.forEach(p => { 
+                        if (p.isDead) return; 
+                        const d = p.obj.position.distanceTo(z.obj.position); 
+                        if(d < closest && p.hp > 0) { closest = d; target = p; } 
+                    });
                     if(target && closest < 80) {
                         z.obj.lookAt(target.obj.position.x, 9, target.obj.position.z);
-                        // Move with 4x step size on this frame for correct average speed
                         const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); z.obj.position.addScaledVector(fwd, zSpeed * dt * 4); 
                         if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt * 4); 
-                        if(closest < 2.5 && Math.random() < 0.04 && !Sys.isGameOver) { 
+                        if(closest < 2.5 && Math.random() < 0.04 && !target.isDead) { 
                             target.hp -= 10; playSound('hurt');
                             const ov = document.getElementById('damage-overlay'); ov.style.opacity = 0.5; setTimeout(()=>ov.style.opacity=0, 100); 
                         }
                     }
                     if(z.sound && target) z.sound.setPlaybackRate(Math.min(1.0, 1 + (80 - closest) / 80)); 
-
                 });
             } else {
                  Sys.zombies.forEach(z => {
                     let closest = 999, target = null;
-                    Sys.players.forEach(p => { const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
+                    Sys.players.forEach(p => { if(p.isDead) return; const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
                     if(target && closest < 80) {
-                        // Smooth movement on other frames (1x step size)
                         const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); 
                         z.obj.position.addScaledVector(fwd, zSpeed * dt);
                         if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt);
@@ -753,6 +661,7 @@
             renderer.clear();
             
             Sys.players.forEach((p,i)=>{
+                if(p.isDead) return; 
                 if(p.model) p.model.visible = false;
                 if(Sys.players.length === 1) { p.cam.aspect=w/h; p.cam.updateProjectionMatrix(); renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(true); renderer.render(scene, p.cam); } 
                 else { const l=i===0?0:w/2; p.cam.aspect=(w/2)/h; p.cam.updateProjectionMatrix(); renderer.setViewport(l,0,w/2,h); renderer.setScissor(l,0,w/2,h); renderer.setScissorTest(true); renderer.render(scene, p.cam); } 
