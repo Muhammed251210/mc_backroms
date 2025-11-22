@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: TARGETING FIX & REWARDS</title>
+    <title>Backrooms: LEVEL 0 REALISM</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
         
@@ -11,134 +11,68 @@
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
         /* HEALTH BARS */
-        .stat-bar-container {
-            position: absolute; height: 20px; width: 200px;
-            background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; overflow: hidden;
-            display: none;
-        }
+        .stat-bar-container { position: absolute; height: 20px; width: 200px; background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; overflow: hidden; display: none; }
         .health-fill { width: 100%; height: 100%; background: #ff0000; transition: width 0.2s; }
         
         /* BATTERY BARS */
-        .battery-bar-container {
-            position: absolute; height: 10px; width: 200px;
-            background: rgba(0,0,0,0.5); border: 1px solid #4aa8ff; border-radius: 5px; overflow: hidden;
-            display: none; 
-        }
+        .battery-bar-container { position: absolute; height: 10px; width: 200px; background: rgba(0,0,0,0.5); border: 1px solid #4aa8ff; border-radius: 5px; overflow: hidden; display: none; }
         .battery-fill { width: 100%; height: 100%; background: #4aa8ff; transition: width 0.5s; }
 
-        /* DAMAGE EFFECT */
-        #damage-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: red; opacity: 0; pointer-events: none; transition: opacity 0.1s; z-index: 5; }
+        /* DAMAGE FLASH */
+        .damage-flash { position: absolute; top: 0; height: 100%; background: red; opacity: 0; pointer-events: none; transition: opacity 0.1s; z-index: 5; }
+        #dmg-p1 { left: 0; width: 100%; } 
+        #dmg-p2 { right: 0; width: 50%; display: none; }
 
-        /* CROSSHAIR (+) */
-        .crosshair {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 20px;
-            height: 20px;
-            pointer-events: none;
-            z-index: 500;
-            display: none;
-        }
+        /* CROSSHAIR */
+        .crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; pointer-events: none; z-index: 500; display: none; }
         .crosshair:before, .crosshair:after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 2px black; }
         .crosshair:before { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
         .crosshair:after { height: 2px; width: 100%; top: 50%; left: 0; transform: translateY(-50%); }
 
-        /* INDIVIDUAL DEATH SCREENS */
-        .player-gameover {
-            position: absolute; top: 0; height: 100%;
-            background: rgba(50, 0, 0, 0.9); 
-            display: none; flex-direction: column;
-            align-items: center; justify-content: center; color: white; z-index: 200; pointer-events: auto;
-        }
+        /* SCREENS */
+        .player-gameover { position: absolute; top: 0; height: 100%; background: rgba(50, 0, 0, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 200; pointer-events: auto; }
         .player-gameover h1 { font-size: 40px; margin: 0; text-shadow: 2px 2px 0 #000; color: red; }
         .player-gameover p { font-size: 20px; margin-top: 10px; color: #ddd; cursor: pointer; text-decoration: underline; }
-
-        /* GLOBAL SCREENS */
-        .overlay-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column;
-            align-items: center; justify-content: center; color: white; z-index: 300; pointer-events: auto;
-        }
-        
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; color: white; z-index: 300; pointer-events: auto; }
         #join-alert { position: absolute; top: 20%; width: 100%; text-align: center; color: #00ff00; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 0 #000; display: none; z-index: 150; }
         #pause-screen h1 { color: #ffff55; }
 
         /* CONTROLS */
-        #touch-ui { display: none; }
+        #touch-ui { display: none; z-index: 100; }
         #joystick-zone { position: absolute; bottom: 50px; left: 50px; width: 140px; height: 140px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 50%; pointer-events: auto; touch-action: none; }
         #joystick-knob { position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; background: rgba(255, 200, 0, 0.6); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
         #touch-right-zone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; z-index: 20; touch-action: none; }
-        
-        #btn-jump { 
-            position: absolute; bottom: 60px; right: 40px; width: 90px; height: 90px; border-radius: 50%; 
-            background: rgba(200, 200, 200, 0.3); border: 2px solid rgba(255,255,255,0.4); pointer-events: auto; z-index: 30; 
-            display: flex; align-items: center; justify-content: center; 
-            color: white; font-weight: bold; font-size: 14px;
-        }
-        
-        #btn-attack { 
-            position: absolute; bottom: 60px; right: 150px; width: 70px; height: 70px; border-radius: 50%; 
-            background: rgba(255, 0, 0, 0.6); border: 2px solid rgba(255, 100, 100, 0.8); 
-            pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; 
-            color: white; font-weight: bold; font-size: 12px; 
-        }
-
-        #btn-flashlight {
-            position: absolute; bottom: 180px; right: 150px; width: 70px; height: 70px; border-radius: 50%; 
-            background: rgba(255, 255, 0, 0.6); border: 2px solid rgba(255, 255, 100, 0.8); 
-            pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; 
-            color: black; font-weight: bold; font-size: 12px; 
-        }
+        #btn-jump { position: absolute; bottom: 60px; right: 40px; width: 90px; height: 90px; border-radius: 50%; background: rgba(200, 200, 200, 0.3); border: 2px solid rgba(255,255,255,0.4); pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; touch-action: none; }
+        #btn-attack { position: absolute; bottom: 60px; right: 150px; width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 0, 0, 0.6); border: 2px solid rgba(255, 100, 100, 0.8); pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; touch-action: none; }
+        #btn-flashlight { position: absolute; bottom: 180px; right: 150px; width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 255, 0, 0.6); border: 2px solid rgba(255, 255, 100, 0.8); pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 12px; touch-action: none; }
 
         /* MENU */
-        #menu {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #111; color: #ffea00; z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            pointer-events: auto;
-        }
-        .btn {
-            padding: 20px 40px; font-size: 20px; background: #333; color: white;
-            border: 2px solid #555; margin: 10px; border-radius: 10px;
-            cursor: pointer; width: 80%; max-width: 300px; text-align: center;
-        }
+        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111; color: #ffea00; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; }
+        .btn { padding: 20px 40px; font-size: 20px; background: #333; color: white; border: 2px solid #555; margin: 10px; border-radius: 10px; cursor: pointer; width: 80%; max-width: 300px; text-align: center; }
         .active-slot { border-color: #0f0; background: #003300; }
         #split-line { position: absolute; left: 50%; top: 0; width: 3px; height: 100%; background: #000; display: none; z-index: 5; transform: translateX(-50%); }
     </style>
 </head>
 <body>
-    <div id="damage-overlay"></div>
+    <div id="glitch-layer" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:6; opacity:0; background:rgba(100,0,0,0.2); mix-blend-mode:hard-light;"></div>
+    <div id="dmg-p1" class="damage-flash"></div>
+    <div id="dmg-p2" class="damage-flash"></div>
     <div id="split-line"></div>
     <div id="join-alert">PLAYER 2 JOINED!</div>
-    
     <div id="crosshair-p1" class="crosshair"></div>
     <div id="crosshair-p2" class="crosshair"></div>
-
     <div id="fps-counter" style="position: absolute; top: 10px; right: 10px; color: #00ff00; font-family: monospace; font-size: 22px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 6px; z-index: 6000;">0 FPS</div>
     
     <div id="ui-layer">
         <div id="hp-p1" class="stat-bar-container" style="top: 20px; left: 20px;"><div class="health-fill"></div></div>
         <div id="bat-p1" class="battery-bar-container" style="top: 50px; left: 20px;"><div class="battery-fill"></div></div>
-        
         <div id="hp-p2" class="stat-bar-container" style="top: 20px; right: 20px; display: none;"><div class="health-fill"></div></div>
         <div id="bat-p2" class="battery-bar-container" style="top: 50px; right: 20px; display: none;"><div class="battery-fill"></div></div>
     </div>
 
-    <div id="go-p1" class="player-gameover">
-        <h1>YOU DIED</h1>
-        <p onclick="window.respawn(0)">Click to Respawn</p>
-    </div>
-    <div id="go-p2" class="player-gameover">
-        <h1>YOU DIED</h1>
-        <p onclick="window.respawn(1)">Click to Respawn</p>
-    </div>
-
-    <div id="pause-screen" class="overlay-screen" style="display:none;">
-        <h1>PAUSED</h1>
-        <p>Press Start to Resume</p>
-    </div>
+    <div id="go-p1" class="player-gameover"><h1>YOU DIED</h1><p onclick="window.respawn(0)">Click to Respawn</p></div>
+    <div id="go-p2" class="player-gameover"><h1>YOU DIED</h1><p onclick="window.respawn(1)">Click to Respawn</p></div>
+    <div id="pause-screen" class="overlay-screen" style="display:none;"><h1>PAUSED</h1><p>Press Start to Resume</p></div>
 
     <div id="touch-ui">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
@@ -149,46 +83,38 @@
     </div>
 
     <div id="menu">
-        <h1>BACKROOMS MCPE</h1>
+        <h1>BACKROOMS: LEVEL 0</h1>
         <div id="p1-slot" class="btn">PLAYER 1: Waiting...</div>
         <div id="p2-slot" class="btn" style="display:none;">PLAYER 2: Waiting...</div>
-        
         <div id="controls-hint" style="margin:20px; color:#aaa; text-align:center;">
-            Mode Selection:<br>
-            <button id="btn-single" class="btn" style="padding:10px; margin:5px; display:inline-block;">SINGLEPLAYER</button>
-            <button id="btn-multi" class="btn" style="padding:10px; margin:5px; display:inline-block;">MULTIPLAYER</button>
+            Mode Selection:<br><button id="btn-single" class="btn">SINGLEPLAYER</button><button id="btn-multi" class="btn">MULTIPLAYER</button>
         </div>
-
         <button id="btn-start" class="btn" style="display:none; background:#d4d400; color:black; font-weight:bold; padding:20px 50px;">START</button>
-        
-        <p style="font-size:12px; color:#666;">
-            Key sounds: sounds/click.mp3<br>
-            Player 2 can join by pressing Start twice on a controller.
-        </p>
+        <p style="font-size:12px; color:#666;">Controls: R1=Attack, O=Light, X=Jump, Square=View<br>Player 2 press Start twice.</p>
         <button id="btn-touch-sel" class="btn" style="background:#0055aa; color:white; padding:10px;">SELECT TOUCH CONTROLS</button>
     </div>
 
     <script type="module">
         import * as THREE from 'https://unpkg.com/three@0.126.0/build/three.module.js';
 
-        // --- SYSTEM ---
         const Sys = { mode: 1, players: [], ready: 0, active: false, paused: false, zombies: [], items: [] };
         const InputMap = { p1: null, p2: null };
         const P2JoinData = { lastPressTime: 0, presses: 0 };
         const PauseData = { lastState: false };
+        const GPState = { p1Light: false, p2Light: false, p1Cam: false, p2Cam: false };
         const PHYS = { speed: 12.5, gravity: 80.0, jumpForce: 25.0, lookSpeed: 0.007 }; 
-        const WS = 40, BS = 5; // World Size
+        const WS = 80, BS = 10; // MAP BOYUTU BÜYÜTÜLDÜ (Backrooms ölçeği)
         let map = [], mapTypes = [];
         let isAudioContextInitiated = false; 
-
-        // --- FPS COUNTER ---
         let fps = 0, frameCount = 0, lastUpdate = 0;
         const fpsElement = document.getElementById('fps-counter');
 
-        // --- SOUNDS ---
+        // --- HORROR SYSTEM ---
+        const Horror = { nextGlitchTime: Date.now() + 10000, nextFlickerTime: Date.now() + 15000 };
+
         const Sounds = {};
         let audioListener, audioLoader;
-        const audioFiles = { jump: './sounds/jump.mp3', attack: './sounds/attack.mp3', hurt: './sounds/hurt.mp3' };
+        const audioFiles = { jump: './sounds/jump.mp3', attack: './sounds/attack.mp3', hurt: './sounds/hurt.mp3', zombie: './sounds/zombie.mp3' };
         const musicFiles = ['./sounds/LivingMice.mp3', './sounds/MoogCity.mp3', './sounds/SubwooferLullaby.mp3'];
         let currentMusic = null;
 
@@ -196,21 +122,15 @@
             if (!isAudioContextInitiated) return;
             audioListener = new THREE.AudioListener();
             audioLoader = new THREE.AudioLoader();
-            for (const [key, path] of Object.entries(audioFiles)) {
-                const audio = new Audio(path); audio.volume = 0.4; Sounds[key] = audio;
-            }
+            for (const [key, path] of Object.entries(audioFiles)) { const audio = new Audio(path); audio.volume = 0.4; Sounds[key] = audio; }
         }
-
         function playPositionalSound(object, path, volume = 0.6, loop = false) {
             if (!audioListener || !audioLoader) return;
             const sound = new THREE.PositionalAudio(audioListener);
-            sound.setVolume(volume);
-            sound.setLoop(loop);
-            sound.setRefDistance(15); 
+            sound.setVolume(volume); sound.setLoop(loop); sound.setRefDistance(20); 
             audioLoader.load(path, function(buffer) { sound.setBuffer(buffer); object.add(sound); sound.play(); });
             return sound;
         }
-
         function playClick() { try { const a = new Audio('./sounds/click.mp3'); a.volume=1.0; a.play().catch(()=>{}); } catch(e){} }
         function playSound(name) { if (Sounds[name] && Sys.active && !Sys.paused) { const a = Sounds[name].cloneNode(); a.play().catch(()=>{}); } }
         function playRandomMusic() {
@@ -227,110 +147,94 @@
             el.addEventListener('touchstart', initAudioContext, { once: true });
         });
         
-        // --- MENU CLICKS ---
         document.getElementById('btn-single').addEventListener('click', () => { playClick(); setMode(1); });
         document.getElementById('btn-multi').addEventListener('click', () => { playClick(); setMode(2); });
         document.getElementById('btn-start').addEventListener('click', () => { playClick(); startGame(); });
         document.getElementById('btn-touch-sel').addEventListener('click', () => { playClick(); assignTouch(); });
 
-
-        // --- TEXTURES ---
         const tl = new THREE.TextureLoader();
         function loadTex(path, repeatY) {
             const t = tl.load(path); t.magFilter = THREE.NearestFilter; t.minFilter = THREE.NearestFilter;
             t.wrapS = THREE.RepeatWrapping; t.wrapT = THREE.RepeatWrapping;
-            if (repeatY > 1) t.repeat.set(1, repeatY);
-            return t;
+            if (repeatY > 1) t.repeat.set(1, repeatY); return t;
         }
+        
+        // BACKROOMS TEXTURES (Renklendirilmiş)
         const texMain = { base: loadTex('./photos/hardened_clay_stained_magenta.png', 7), glass: loadTex('./photos/glass_orange.png', 7) };
         const texFloor = { main: loadTex('./photos/hardened_clay_stained_magenta.png', 1), ceil: loadTex('./photos/acacia_trapdoor.png', 1) };
+        
         const matList = {
-            mainBase: new THREE.MeshLambertMaterial({ map: texMain.base }), 
-            mainGlass: new THREE.MeshLambertMaterial({ map: texMain.glass, transparent: true, opacity: 0.9 }),
-            floorMain: new THREE.MeshLambertMaterial({ map: texFloor.main }), 
-            ceil: new THREE.MeshLambertMaterial({ map: texFloor.ceil }),
+            // SARI DUVARLAR (Backrooms Yellow)
+            backroomsWall: new THREE.MeshLambertMaterial({ map: texMain.base, color: 0xe6c85d }), 
+            // ZEMİN (Kirli Sarı/Kahve)
+            backroomsFloor: new THREE.MeshLambertMaterial({ map: texFloor.main, color: 0xc2b280 }), 
+            // TAVAN (Ofis Tavanı gibi açık)
+            backroomsCeil: new THREE.MeshLambertMaterial({ map: texFloor.ceil, color: 0xeeeeee }),
             battery: new THREE.MeshBasicMaterial({ color: 0xffcc00, wireframe: false })
         };
 
-        // --- CHARACTER ---
         function createHumanoid(isZombie) {
             const group = new THREE.Group();
-            const cSkin = isZombie ? 0x4a6b4a : 0xffccaa; const cShirt = isZombie ? 0x3d5c5c : 0x00aaaa; 
-            const cPants = isZombie ? 0x2a2a5c : 0x0000aa;
-            const matSkin = new THREE.MeshLambertMaterial({ color: cSkin }); const matShirt = new THREE.MeshLambertMaterial({ color: cShirt });
-            const matPants = new THREE.MeshLambertMaterial({ color: cPants });
+            const cSkin = isZombie ? 0x4a6b4a : 0xffccaa; const cShirt = isZombie ? 0x3d5c5c : 0x00aaaa; const cPants = isZombie ? 0x2a2a5c : 0x0000aa;
+            const matSkin = new THREE.MeshLambertMaterial({ color: cSkin }); const matShirt = new THREE.MeshLambertMaterial({ color: cShirt }); const matPants = new THREE.MeshLambertMaterial({ color: cPants });
             const head = new THREE.Mesh(new THREE.BoxGeometry(2.5, 2.5, 2.5), matSkin); head.position.y = 8.25; group.add(head);
             const body = new THREE.Mesh(new THREE.BoxGeometry(2.6, 3.5, 1.3), matShirt); body.position.y = 5.25; group.add(body);
             const armGeo = new THREE.BoxGeometry(1, 3.5, 1);
-            const rArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin); rArm.position.set(1.9, 5.25, 0); 
-            if(isZombie) { rArm.rotation.x = -Math.PI/2; rArm.position.y += 1; rArm.position.z += 1.5; } group.add(rArm);
-            const lArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin); lArm.position.set(-1.9, 5.25, 0); 
-            if(isZombie) { lArm.rotation.x = -Math.PI/2; lArm.position.y += 1; lArm.position.z += 1.5; } group.add(lArm);
+            const rArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin); rArm.position.set(1.9, 5.25, 0); if(isZombie) { rArm.rotation.x = -Math.PI/2; rArm.position.y += 1; rArm.position.z += 1.5; } group.add(rArm);
+            const lArm = new THREE.Mesh(armGeo, isZombie ? matShirt : matSkin); lArm.position.set(-1.9, 5.25, 0); if(isZombie) { lArm.rotation.x = -Math.PI/2; lArm.position.y += 1; lArm.position.z += 1.5; } group.add(lArm);
             const legGeo = new THREE.BoxGeometry(1.1, 3.5, 1.1); const rLeg = new THREE.Mesh(legGeo, matPants); rLeg.position.set(0.7, 1.75, 0); group.add(rLeg);
             const lLeg = new THREE.Mesh(legGeo, matPants); lLeg.position.set(-0.7, 1.75, 0); group.add(lLeg);
             return group;
         }
         
-        window.setMode = (m) => {
-            Sys.mode = m;
-            if(m===2) document.getElementById('p2-slot').style.display = 'block';
-            document.getElementById('controls-hint').style.display = 'none';
-            checkInput();
-        };
+        window.setMode = (m) => { Sys.mode = m; if(m===2) document.getElementById('p2-slot').style.display = 'block'; document.getElementById('controls-hint').style.display = 'none'; checkInput(); };
         window.assignTouch = () => assign('touch', 0);
         function checkInput() { if(Sys.active) return; const gps = navigator.getGamepads ? navigator.getGamepads() : []; for(let i=0; i<gps.length; i++) { if(gps[i] && gps[i].buttons.some(b=>b.pressed)) assign('gamepad', i); } requestAnimationFrame(checkInput); }
-        const keys = {}; window.addEventListener('keydown', e => { keys[e.code] = true; if(!Sys.active && ['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); if(Sys.active && e.code === 'KeyF') attack(0); if(Sys.active && e.code === 'KeyL') toggleFlashlight(Sys.players[0]); }); window.addEventListener('keyup', e => keys[e.code] = false);
+        const keys = {}; window.addEventListener('keydown', e => { keys[e.code] = true; if(!Sys.active && ['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); if(Sys.active && e.code === 'KeyF') attack(0); if(Sys.active && e.code === 'KeyL') toggleFlashlight(Sys.players[0]); if(Sys.active && e.code === 'KeyP') togglePerspective(Sys.players[0]); }); window.addEventListener('keyup', e => keys[e.code] = false);
         
-        // RESPAWN FUNCTION
         window.respawn = (pIdx) => {
             if(Sys.players[pIdx]) {
-                const p = Sys.players[pIdx];
-                p.hp = 100; p.battery = 100; p.isDead = false;
-                p.obj.position.set(p.id===1?-5:5, 9, 0);
+                const p = Sys.players[pIdx]; p.hp = 100; p.battery = 100; p.isDead = false;
+                p.obj.position.set(p.id===1?-10:10, 9, 0);
                 document.getElementById(pIdx===0 ? 'go-p1' : 'go-p2').style.display = 'none';
                 document.getElementById(pIdx===0 ? 'crosshair-p1' : 'crosshair-p2').style.display = 'block';
                 if(p.inp.type === 'keyboard') document.body.requestPointerLock();
             }
         };
 
+        function triggerDamageFlash(pIdx) {
+            const id = pIdx === 0 ? 'dmg-p1' : 'dmg-p2';
+            const el = document.getElementById(id);
+            if(el) { el.style.opacity = 0.5; setTimeout(()=>el.style.opacity=0, 100); }
+        }
+
         function assign(type, idx) {
             if(Sys.ready >= Sys.mode) return;
             if(InputMap.p1 && InputMap.p1.type === type && InputMap.p1.index === idx) return;
             const pid = InputMap.p1 ? 2 : 1; InputMap['p'+pid] = { type, index: idx };
-            const slot = document.getElementById('p'+pid+'-slot');
-            slot.innerText = `PLAYER ${pid}: ${type.toUpperCase()} READY`;
-            slot.classList.add('active-slot');
+            document.getElementById('p'+pid+'-slot').innerText = `PLAYER ${pid}: ${type.toUpperCase()} READY`;
+            document.getElementById('p'+pid+'-slot').classList.add('active-slot');
             if(type==='touch') document.getElementById('btn-touch-sel').style.display='none';
             Sys.ready++; if(Sys.ready === Sys.mode) document.getElementById('btn-start').style.display='block';
         }
 
-        // --- START GAME ---
         window.startGame = () => {
             document.getElementById('menu').style.display = 'none';
-            
-            const c1 = document.getElementById('crosshair-p1');
-            const c2 = document.getElementById('crosshair-p2');
-            const p1GO = document.getElementById('go-p1');
-            const p2GO = document.getElementById('go-p2');
+            const c1 = document.getElementById('crosshair-p1'); const c2 = document.getElementById('crosshair-p2');
+            const p1GO = document.getElementById('go-p1'); const p2GO = document.getElementById('go-p2');
+            const d1 = document.getElementById('dmg-p1'); const d2 = document.getElementById('dmg-p2');
 
-            // P1 UI
-            document.getElementById('hp-p1').style.display = 'block';
-            document.getElementById('bat-p1').style.display = 'block';
+            document.getElementById('hp-p1').style.display = 'block'; document.getElementById('bat-p1').style.display = 'block';
             c1.style.display = 'block';
 
             if(Sys.mode === 2) {
-                c1.style.left = '25%'; 
-                c2.style.display = 'block';
-                c2.style.left = '75%'; 
-                
-                document.getElementById('hp-p2').style.display = 'block';
-                document.getElementById('bat-p2').style.display = 'block';
-
-                p1GO.style.width = '50%'; p1GO.style.left = '0';
-                p2GO.style.width = '50%'; p2GO.style.left = '50%';
+                c1.style.left = '25%'; c2.style.display = 'block'; c2.style.left = '75%'; 
+                document.getElementById('hp-p2').style.display = 'block'; document.getElementById('bat-p2').style.display = 'block';
+                p1GO.style.width = '50%'; p1GO.style.left = '0'; p2GO.style.width = '50%'; p2GO.style.left = '50%';
+                d1.style.width = '50%'; d2.style.display = 'block';
             } else {
-                c1.style.left = '50%';
-                p1GO.style.width = '100%'; p1GO.style.left = '0';
+                c1.style.left = '50%'; p1GO.style.width = '100%'; p1GO.style.left = '0';
+                d1.style.width = '100%'; d2.style.display = 'none';
             }
 
             if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
@@ -343,81 +247,113 @@
         let scene, renderer, clock;
         function initEngine() {
             Sys.active = true; clock = new THREE.Clock(); scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x503050); scene.fog = new THREE.FogExp2(0x503050, 0.035);
-            const light = new THREE.AmbientLight(0xffffff, 0.2); scene.add(light); 
-            renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.autoClear = false; document.body.appendChild(renderer.domElement);
             
+            // BACKROOMS ATMOSFERİ: SARI SİS
+            scene.background = new THREE.Color(0x999900); 
+            scene.fog = new THREE.FogExp2(0x998800, 0.025); // Sonsuzluk hissi için yoğun sarı sis
+            
+            const light = new THREE.AmbientLight(0xffddaa, 0.3); scene.add(light); 
+            renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.autoClear = false; document.body.appendChild(renderer.domElement);
             generateWorld();
             if(InputMap.p1) createPlayer(1, InputMap.p1);
             if(InputMap.p2) { createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display='block'; }
-            
             if (audioListener && Sys.players[0]) Sys.players[0].cam.add(audioListener);
             setInterval(trySpawnZombies, 10000); setInterval(trySpawnItems, 30000); 
             animate();
         }
 
+        // --- BACKROOMS HARİTA ALGORİTMASI ---
         function generateWorld() {
-            const geo = new THREE.BoxGeometry(BS, BS*7, BS); const pln = new THREE.PlaneGeometry(BS, BS);
-            for(let x=0; x<WS; x++) { mapTypes[x] = []; map[x] = []; for(let z=0; z<WS; z++) mapTypes[x][z] = 0; }
-            for(let i=0; i<3; i++) { const rx = Math.floor(Math.random()*(WS-10))+5; const rz = Math.floor(Math.random()*(WS-10))+5; for(let x=rx-2; x<=rx+2; x++) for(let z=rz-2; z<=rz+2; z++) mapTypes[x][z] = 1; }
+            const geo = new THREE.BoxGeometry(BS, BS*7, BS); 
+            // Devasa zemin ve tavan (Sonsuz hissi için)
+            const floorGeo = new THREE.PlaneGeometry(WS*BS*4, WS*BS*4);
+            
+            const f = new THREE.Mesh(floorGeo, matList.backroomsFloor); f.rotation.x = -Math.PI/2; f.position.set(0,0,0); scene.add(f);
+            const c = new THREE.Mesh(floorGeo, matList.backroomsCeil); c.rotation.x = Math.PI/2; c.position.set(0,BS*7,0); scene.add(c);
+
+            for(let x=0; x<WS; x++) { map[x] = []; for(let z=0; z<WS; z++) map[x][z] = 1; } 
+
+            // Rastgele Odalar ve Koridorlar (Level 0 Tarzı)
+            // Büyük bir labirent oluşturmak için "Drunkard's Walk" benzeri yöntem
+            let crawler = {x: WS/2, z: WS/2};
+            for (let i = 0; i < WS * WS * 0.6; i++) { // Haritanın %60'ını kaz
+                map[Math.floor(crawler.x)][Math.floor(crawler.z)] = 0;
+                const dir = Math.floor(Math.random() * 4);
+                if (dir === 0 && crawler.x < WS-2) crawler.x++;
+                else if (dir === 1 && crawler.x > 1) crawler.x--;
+                else if (dir === 2 && crawler.z < WS-2) crawler.z++;
+                else if (dir === 3 && crawler.z > 1) crawler.z--;
+            }
+
+            // Başlangıç alanını temizle (Geniş bir lobi)
+            const center = Math.floor(WS/2);
+            for(let x=center-4; x<=center+4; x++) {
+                for(let z=center-4; z<=center+4; z++) {
+                    map[x][z] = 0;
+                }
+            }
+
+            // Duvarları oluştur
             for(let x=0; x<WS; x++) { for(let z=0; z<WS; z++) {
-                const px = (x-WS/2)*BS, pz = (z-WS/2)*BS; const isRare = (mapTypes[x][z] === 1);
-                const f = new THREE.Mesh(pln, matList.floorMain); f.rotation.x = -Math.PI/2; f.position.set(px,0,pz); scene.add(f);
-                const c = new THREE.Mesh(pln, matList.ceil); c.rotation.x = Math.PI/2; c.position.set(px,BS*7,pz); scene.add(c);
-                let w = (x===0||x===WS-1||z===0||z===WS-1) || (Math.random()<0.1 && Math.abs(x-WS/2)>2 && Math.abs(z-WS/2)>2);
-                if(w) {
-                    map[x][z] = 1; 
-                    let wallMat = (Math.random()<0.10) ? matList.mainGlass : matList.mainBase;
-                    const b = new THREE.Mesh(geo, wallMat); b.position.set(px,BS*3.5,pz); scene.add(b);
-                } else map[x][z] = 0;
+                const px = (x-WS/2)*BS, pz = (z-WS/2)*BS;
+                if(map[x][z] === 1) {
+                    // Sadece komşusu boş olan duvarları renderla (Optimizasyon)
+                    // Basitlik için hepsini renderlıyoruz ama Backrooms duvar materyaliyle
+                    const b = new THREE.Mesh(geo, matList.backroomsWall); 
+                    b.position.set(px,BS*3.5,pz); scene.add(b);
+                }
             }}
         }
         
-        function createBattery() {
-            const g = new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16); const m = matList.battery;
-            const mesh = new THREE.Mesh(g, m); mesh.rotation.x = Math.PI/2;
-            return { type: 'battery', obj: mesh };
-        }
+        function createBattery() { const g = new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16); const m = matList.battery; const mesh = new THREE.Mesh(g, m); mesh.rotation.x = Math.PI/2; return { type: 'battery', obj: mesh }; }
         function trySpawnItems() {
-            if(Sys.paused || Sys.items.length >= 5) return;
+            if(Sys.paused || Sys.items.length >= 10) return;
             const rx = Math.floor(Math.random()*WS), rz = Math.floor(Math.random()*WS);
             const px = (rx-WS/2)*BS, pz = (rz-WS/2)*BS;
-            if(map[rx][rz] === 0) {
-                let safe = true; Sys.players.forEach(p => { if(p.obj.position.distanceTo(new THREE.Vector3(px,9,pz)) < 5) safe = false; });
-                if(safe) { const item = createBattery(); item.obj.position.set(px, 9.5, pz); scene.add(item.obj); Sys.items.push(item); }
+            if(map[rx] && map[rx][rz] === 0) {
+                const item = createBattery(); item.obj.position.set(px, 9.5, pz); scene.add(item.obj); Sys.items.push(item); 
             }
         }
 
         function createPlayer(id, inp) {
-            const o = new THREE.Object3D(); 
-            const c = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 100); o.add(c);
-            const flashlight = new THREE.SpotLight(0xffcc88, 0, 40, Math.PI/6, 0.5, 0.5);
-            flashlight.position.set(0, 0, 0); flashlight.target.position.set(0, 0, -1); c.add(flashlight); c.add(flashlight.target);
+            const o = new THREE.Object3D(); const c = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 150); o.add(c);
+            
+            // IŞIK DÜZELTMESİ: SpotLight ve Target'ı Kameraya ekle
+            const flashlight = new THREE.SpotLight(0xffccaa, 0, 50, Math.PI/5, 0.5, 1); 
+            flashlight.position.set(0, 0, 0); 
+            flashlight.target.position.set(0, 0, -1); // İleri bakıyor
+            c.add(flashlight); 
+            c.add(flashlight.target); // Target da kamerayla döner
+
             const steve = createHumanoid(false); steve.position.y = -9.0; o.add(steve);
             const l = new THREE.PointLight(0xffaa00, 0.0, 15); l.position.set(0,0,0); o.add(l);
-            o.position.set(id===1?-5:5, 9, 0); scene.add(o);
+            
+            // Başlangıç pozisyonu (Map ortası)
+            o.position.set(id===1?-10:10, 9, 0); 
+            scene.add(o);
+            
             const stepAudio = new Audio('./sounds/step.mp3'); stepAudio.loop = true; stepAudio.volume = 0.2;
-            Sys.players.push({ 
-                id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(), onGround: false, hp: 100, isDead: false,
-                model: steve, stepAudio: stepAudio, battery: 100, isFlashlightOn: false, flashlight: flashlight, cameraY: c.position.y 
-            });
+            Sys.players.push({ id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(), onGround: false, hp: 100, isDead: false, model: steve, stepAudio: stepAudio, battery: 100, isFlashlightOn: false, flashlight: flashlight, cameraY: c.position.y, cameraMode: 0, lastAttack: 0 });
         }
 
         function toggleFlashlight(player) {
             if (player.battery <= 0 && !player.isFlashlightOn) return; 
             player.isFlashlightOn = !player.isFlashlightOn;
-            if (player.isFlashlightOn) { player.flashlight.intensity = 1.5; if (player.battery <= 0) player.battery = 1; } 
-            else { player.flashlight.intensity = 0; }
+            if (player.isFlashlightOn) { player.flashlight.intensity = 1.5; if (player.battery <= 0) player.battery = 1; } else { player.flashlight.intensity = 0; }
+        }
+        function togglePerspective(player) {
+            player.cameraMode = (player.cameraMode + 1) % 2;
+            if (player.cameraMode === 1) player.cam.position.set(0, 2, 5); else player.cam.position.set(0, 0, 0);
         }
 
         function trySpawnZombies() {
-            if(Sys.paused || Sys.zombies.length >= 15) return;
+            if(Sys.paused || Sys.zombies.length >= 20) return;
             let spawned = 0, attempts = 0;
-            while(spawned < 3 && attempts < 50) {
+            while(spawned < 2 && attempts < 50) {
                 attempts++; const rx = Math.floor(Math.random()*WS), rz = Math.floor(Math.random()*WS);
                 const px = (rx-WS/2)*BS, pz = (rz-WS/2)*BS;
-                if(map[rx][rz] === 0) {
-                    let safe = true; Sys.players.forEach(p => { if(p.obj.position.distanceTo(new THREE.Vector3(px,9,pz)) < 20) safe = false; });
+                if(map[rx] && map[rx][rz] === 0) {
+                    let safe = true; Sys.players.forEach(p => { if(p.obj.position.distanceTo(new THREE.Vector3(px,9,pz)) < 30) safe = false; });
                     if(safe) {
                         const zObj = new THREE.Object3D(); const zModel = createHumanoid(true); zModel.position.y = -9.0; zObj.add(zModel);
                         zObj.position.set(px, 9, pz); scene.add(zObj); 
@@ -429,82 +365,77 @@
             }
         }
 
-        // --- DÜZELTİLMİŞ ATTACK FONKSİYONU ---
         function attack(pIdx) {
             if(!Sys.players[pIdx] || Sys.paused || Sys.players[pIdx].isDead) return;
             const p = Sys.players[pIdx]; 
-            // Görsel geri bildirim
-            p.cam.position.y -= 0.2; setTimeout(()=>p.cam.position.y+=0.2, 50);
-            
+            const now = Date.now();
+            if (now - p.lastAttack < 400) return; 
+            p.lastAttack = now;
+
+            if(p.cameraMode===0) { p.cam.position.y -= 0.2; setTimeout(()=>p.cam.position.y+=0.2, 100); }
             let hit = false;
             
-            // Kameranın DÜNYA koordinatlarında baktığı yönü al (FIX)
-            const pDir = new THREE.Vector3();
-            p.cam.updateMatrixWorld(); // Matrisi güncelle
-            p.cam.getWorldDirection(pDir);
+            // VURMA YÖNÜ: Kameranın Dünya Koordinatındaki Yönü
+            const pDir = new THREE.Vector3(); 
+            p.cam.updateMatrixWorld(); 
+            p.cam.getWorldDirection(pDir); 
             pDir.normalize();
+            
+            const reach = 30; 
 
             for(let i=0; i<Sys.zombies.length; i++) {
                 const z = Sys.zombies[i];
+                const toZombie = z.obj.position.clone().sub(p.obj.position); // Oyuncudan Zombiye vektör
                 
-                // Oyuncudan zombiye olan vektör
-                const toZombie = z.obj.position.clone().sub(p.obj.position);
-                const dist = toZombie.length();
+                // Yükseklik farkını azalt (Zombi ayaklarına bakma sorunu olmaması için)
+                toZombie.y = 0; 
+                const flatDir = pDir.clone(); flatDir.y = 0; flatDir.normalize(); // Sadece yatay düzlemde bakış
+
+                const dist = toZombie.length(); 
                 toZombie.normalize();
-
-                // Yöney çarpımı (Dot product)
-                const dot = pDir.dot(toZombie);
-
-                // Mesafe < 25 VE Bakış açısı dar (Dot > 0.95 = ~18 derece koni)
-                if(dist < 25 && dot > 0.95) {
+                
+                // Normalde 3D dot product kullanırız ama zombi hitbox'ı büyük olsun
+                const dot = pDir.dot(toZombie.clone().normalize()); // 3D Dot
+                
+                if(dist < reach && dot > 0.9) { 
                     z.hp--; hit=true; playSound('attack'); playSound('hurt');
-                    // Kırmızı yanıp sönme
                     z.obj.children[0].children.forEach(m => { if(m.material.color) m.material.color.setHex(0xff0000); });
                     setTimeout(() => { if(z.obj) z.obj.children[0].children.forEach((m,k) => { const def = (k===0)?0x4a6b4a:(k===4||k===5||k===6)?0x3d5c5c:(k===7||k===8)?0x2a2a5c:0x111111; if(m.material.color) m.material.color.setHex(def); }); }, 100);
+                    const k = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(8); z.obj.position.add(k);
                     
-                    // Geri tepme
-                    const k = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(5); 
-                    z.obj.position.add(k);
-                    
-                    // Zombi ölümü
                     if(z.hp <= 0) { 
                         scene.remove(z.obj); if(z.sound) z.sound.stop(); Sys.zombies.splice(i, 1); 
-                        // ÖDÜL: Can +25 (Sınır yok)
                         p.hp += 25; 
                     } 
-                    break; // Bir vuruşta tek zombi
+                    break;
                 }
             }
-            
-            // Friendly Fire (Arkadaş vurma) için de aynı mantık
-            if(!hit && Sys.mode===2) {
-                Sys.players.forEach((t, ti) => { 
-                    if(ti!==pIdx && !t.isDead) {
-                        const toT = t.obj.position.clone().sub(p.obj.position);
-                        const dist = toT.length();
-                        toT.normalize();
-                        const dot = pDir.dot(toT);
-                        // Arkadaş vurma biraz daha zor olsun (dot > 0.95)
-                        if(dist < 25 && dot > 0.95) { 
-                            t.hp-=10; hit=true; playSound('attack'); playSound('hurt'); 
-                            const k = new THREE.Vector3().subVectors(t.obj.position, p.obj.position).normalize().multiplyScalar(8); t.obj.position.add(k); t.obj.position.y+=2; t.onGround=false; 
-                            if(t.id===1) { const ov=document.getElementById('damage-overlay'); ov.style.opacity=0.5; setTimeout(()=>ov.style.opacity=0, 100); } 
-                        } 
-                    }
-                });
-            }
+            if(hit) { /* Vurma başarılı */ } 
+            // Sadece vurunca ses çıksın dediğiniz için boşa sallayınca ses yok.
         }
 
         function joinPlayer2(gpIndex) { if(Sys.mode === 2) return; Sys.mode = 2; InputMap.p2 = { type: 'gamepad', index: gpIndex }; createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display = 'block'; document.getElementById('join-alert').style.display = 'block'; setTimeout(()=>document.getElementById('join-alert').style.display='none', 3000); if(InputMap.p1.type === 'touch') { document.getElementById('touch-ui').style.width = '50%'; document.getElementById('touch-ui').style.left = '0'; } }
+        
         function handleGamepad() {
             const gps = navigator.getGamepads(); if(!gps) return;
             if(InputMap.p1?.type === 'gamepad') { 
                 const gp = gps[InputMap.p1.index]; 
                 if(gp) { 
                     if(gp.buttons[9].pressed) { if(!PauseData.lastState && Sys.mode===1) { Sys.paused = !Sys.paused; document.getElementById('pause-screen').style.display = Sys.paused?'flex':'none'; } PauseData.lastState=true; } else PauseData.lastState=false; 
-                    if((gp.buttons[2].pressed || gp.buttons[5].pressed || gp.buttons[7].pressed) && !Sys.paused) attack(0); 
-                    if(gp.buttons[1].pressed && !Sys.paused) toggleFlashlight(Sys.players[0]);
+                    if(gp.buttons[5].pressed) attack(0); 
+                    if(gp.buttons[1].pressed) { if (!GPState.p1Light) { toggleFlashlight(Sys.players[0]); GPState.p1Light = true; } } else GPState.p1Light = false;
+                    if(gp.buttons[2].pressed) { if (!GPState.p1Cam) { togglePerspective(Sys.players[0]); GPState.p1Cam = true; } } else GPState.p1Cam = false;
+                    if(gp.buttons[0].pressed && Sys.players[0].onGround) { Sys.players[0].vel.y = PHYS.jumpForce; playSound('jump'); }
                 } 
+            }
+            if(InputMap.p2?.type === 'gamepad') {
+                const gp = gps[InputMap.p2.index];
+                if(gp) {
+                    if(gp.buttons[5].pressed) attack(1);
+                    if(gp.buttons[1].pressed) { if (!GPState.p2Light) { toggleFlashlight(Sys.players[1]); GPState.p2Light = true; } } else GPState.p2Light = false;
+                    if(gp.buttons[2].pressed) { if (!GPState.p2Cam) { togglePerspective(Sys.players[1]); GPState.p2Cam = true; } } else GPState.p2Cam = false;
+                    if(gp.buttons[0].pressed && Sys.players[1].onGround) { Sys.players[1].vel.y = PHYS.jumpForce; playSound('jump'); }
+                }
             }
             if(Sys.mode === 1 && !Sys.paused) { for(let i=0; i<gps.length; i++) { if(gps[i] && (!InputMap.p1 || InputMap.p1.index !== i)) { if(gps[i].buttons[9].pressed) { const now = Date.now(); if(now - P2JoinData.lastPressTime > 500) P2JoinData.presses = 0; if(now - P2JoinData.lastPressTime > 200) { P2JoinData.presses++; P2JoinData.lastPressTime = now; if(P2JoinData.presses >= 2) joinPlayer2(i); } } } } }
         }
@@ -515,18 +446,12 @@
             const lookZone = document.getElementById('touch-right-zone'); const jumpBtn = document.getElementById('btn-jump'); 
             const attackBtn = document.getElementById('btn-attack'); const flashlightBtn = document.getElementById('btn-flashlight');
             ui.style.display = 'block'; if(Sys.mode === 2) { const p1Touch = InputMap.p1?.type === 'touch'; ui.style.left = p1Touch ? '0' : '50%'; ui.style.width = '50%'; } 
-            
             let joyStart = {x:0, y:0}; 
             joyZone.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; TouchData.joyID = t.identifier; joyStart.x = t.clientX; joyStart.y = t.clientY; }); 
             joyZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { let dx = e.changedTouches[i].clientX - joyStart.x; let dy = e.changedTouches[i].clientY - joyStart.y; const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50); const angle = Math.atan2(dy, dx); joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`; TouchData.moveX = (Math.cos(angle)*dist)/50; TouchData.moveZ = (Math.sin(angle)*dist)/50; } } }); 
             joyZone.addEventListener('touchend', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { TouchData.joyID = null; TouchData.moveX = 0; TouchData.moveZ = 0; joyKnob.style.transform = `translate(-50%, -50%)`; } } }); 
-            
             let lookStart = {x:0, y:0}; 
-            lookZone.addEventListener('touchstart', e => { e.preventDefault(); 
-                if(e.target !== jumpBtn && e.target !== attackBtn && e.target !== flashlightBtn && !attackBtn.contains(e.target) && !flashlightBtn.contains(e.target)) { 
-                    const t = e.changedTouches[0]; TouchData.lookID = t.identifier; lookStart.x = t.clientX; lookStart.y = t.clientY; 
-                } 
-            }); 
+            lookZone.addEventListener('touchstart', e => { e.preventDefault(); if(e.target !== jumpBtn && e.target !== attackBtn && e.target !== flashlightBtn && !attackBtn.contains(e.target) && !flashlightBtn.contains(e.target)) { const t = e.changedTouches[0]; TouchData.lookID = t.identifier; lookStart.x = t.clientX; lookStart.y = t.clientY; } }); 
             lookZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) { TouchData.lookX = (e.changedTouches[i].clientX - lookStart.x); TouchData.lookY = (e.changedTouches[i].clientY - lookStart.y); lookStart.x = e.changedTouches[i].clientX; lookStart.y = e.changedTouches[i].clientY; } } }); 
             lookZone.addEventListener('touchend', e => { for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) TouchData.lookID = null; } }); 
             jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.jump = true; }); jumpBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.jump = false; }); 
@@ -536,25 +461,34 @@
 
         let mx=0, my=0; document.addEventListener('mousemove', e => { if(document.pointerLockElement) { mx+=e.movementX; my+=e.movementY; } });
         function checkCol(pos) { const p=1.2; if(isWall(pos.x+p,pos.z)||isWall(pos.x-p,pos.z)||isWall(pos.x,pos.z+p)||isWall(pos.x,pos.z-p)) return true; return false; }
-        function isWall(x, z) { const gx = Math.round(x/BS + WS/2); const gz = Math.round(z/BS + WS/2); if(gx<0||gx>=WS||gz<0||gz>=WS) return true; return map[gx][gz] === 1; }
+        function isWall(x, z) { const gx = Math.round(x/BS + WS/2); const gz = Math.round(z/BS + WS/2); if(gx<0||gx>=WS||gz<0||gz>=WS) return true; return map[gx] && map[gx][gz] === 1; }
 
         let headbobTime = 0;
 
+        function handleHorror() {
+            const now = Date.now();
+            if(now > Horror.nextGlitchTime) {
+                const glitchEl = document.getElementById('glitch-layer');
+                glitchEl.style.opacity = 1; glitchEl.classList.add('glitching');
+                setTimeout(() => { glitchEl.style.opacity = 0; glitchEl.classList.remove('glitching'); }, 200 + Math.random() * 300);
+                Horror.nextGlitchTime = now + 10000 + Math.random() * 20000; 
+            }
+            if(now > Horror.nextFlickerTime) {
+                Sys.players.forEach(p => { if(p.isFlashlightOn) p.flashlight.intensity = 0; });
+                setTimeout(() => { Sys.players.forEach(p => { if(p.isFlashlightOn) p.flashlight.intensity = 1.5; }); }, 100 + Math.random() * 400);
+                Horror.nextFlickerTime = now + 15000 + Math.random() * 15000; 
+            }
+        }
+
         function animate() {
             requestAnimationFrame(animate); handleGamepad();
-
-            // FPS
-            const now = Date.now(); frameCount++;
-            if (now - lastUpdate > 1000) { fps = frameCount; fpsElement.innerText = `${fps} FPS`; frameCount = 0; lastUpdate = now; }
-
-            if(Sys.paused) return;
-            const dt = Math.min(clock.getDelta(), 0.1); 
+            const now = Date.now(); frameCount++; if (now - lastUpdate > 1000) { fps = frameCount; fpsElement.innerText = `${fps} FPS`; frameCount = 0; lastUpdate = now; }
+            if(Sys.paused) return; const dt = Math.min(clock.getDelta(), 0.1); 
+            handleHorror();
 
             Sys.players.forEach((p, i) => {
                 if (p.isDead) return; 
-
-                let inputX = 0, inputZ = 0, rotY = 0, rotX = 0;
-                let isMoving = false; 
+                let inputX = 0, inputZ = 0, rotY = 0, rotX = 0, isMoving = false; 
 
                 if(p.inp.type === 'keyboard') { 
                     if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1; 
@@ -563,6 +497,7 @@
                     rotY = -mx * 0.006; rotX = -my * 0.006; 
                     if(keys['KeyE'] || keys['KeyR']) attack(i); 
                     if(keys['KeyL']) { toggleFlashlight(Sys.players[0]); keys['KeyL'] = false; } 
+                    if(keys['KeyP']) { togglePerspective(Sys.players[0]); keys['KeyP'] = false; } 
                 }
                 else if(p.inp.type === 'touch') { 
                     inputX = TouchData.moveX; inputZ = TouchData.moveZ; 
@@ -579,37 +514,19 @@
                         if(gp.buttons[0].pressed && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
                         if(Math.abs(gp.axes[2])>0.1) rotY = -gp.axes[2]*0.04; 
                         if(Math.abs(gp.axes[3])>0.1) rotX = -gp.axes[3]*0.04; 
-                        if(gp.buttons[2].pressed || gp.buttons[7].pressed) attack(i);
-                        if(gp.buttons[1].pressed && !Sys.paused) toggleFlashlight(Sys.players[0]);
                     } 
                 }
                 
                 p.obj.rotation.y += rotY; p.rotX = Math.max(-1.5, Math.min(1.5, p.rotX + rotX)); p.cam.rotation.x = p.rotX;
                 const fwd = new THREE.Vector3(0,0,1).applyQuaternion(p.obj.quaternion); fwd.y=0; fwd.normalize(); const rgt = new THREE.Vector3(1,0,0).applyQuaternion(p.obj.quaternion); rgt.y=0; rgt.normalize();
                 const move = new THREE.Vector3().addScaledVector(fwd, inputZ).addScaledVector(rgt, inputX); if(move.length()>1) move.normalize();
-                
-                // Step Sound & Headbob
                 isMoving = move.lengthSq() > 0.01;
-                if (isMoving && p.onGround) {
-                    if (p.stepAudio.paused) p.stepAudio.play().catch(() => {});
-                    headbobTime += dt * 8; 
-                    p.cam.position.y = p.cameraY + Math.sin(headbobTime) * 0.15; 
-                    p.cam.position.x = Math.cos(headbobTime / 2) * 0.1; 
-                } else {
-                    if (!p.stepAudio.paused) { p.stepAudio.pause(); p.stepAudio.currentTime = 0; }
-                    p.cam.position.y = p.cameraY; p.cam.position.x = 0; headbobTime = 0;
-                }
+                if (isMoving && p.onGround) { if (p.stepAudio.paused) p.stepAudio.play().catch(() => {}); if(p.cameraMode===0) { headbobTime += dt * 8; p.cam.position.y = p.cameraY + Math.sin(headbobTime) * 0.15; p.cam.position.x = Math.cos(headbobTime / 2) * 0.1; } } else { if (!p.stepAudio.paused) { p.stepAudio.pause(); p.stepAudio.currentTime = 0; } if(p.cameraMode===0) { p.cam.position.y = p.cameraY; p.cam.position.x = 0; headbobTime = 0; } }
                 
-                // Battery
-                if (p.isFlashlightOn) {
-                    p.battery -= dt * 3; 
-                    if (p.battery <= 0) { p.battery = 0; toggleFlashlight(p); }
-                } else if (p.battery < 100) { p.battery += dt * 1; }
+                if (p.isFlashlightOn) { p.battery -= dt * 3; if (p.battery <= 0) { p.battery = 0; toggleFlashlight(p); } } else if (p.battery < 100) { p.battery += dt * 1; }
                 p.battery = Math.min(100, Math.max(0, p.battery)); 
                 
-                // Update UI Bars (Sınırı sadece görsel olarak 100 yap, değişken artabilsin)
-                const hpBar = document.querySelector(`#hp-p${p.id} .health-fill`);
-                const batBar = document.querySelector(`#bat-p${p.id} .battery-fill`);
+                const hpBar = document.querySelector(`#hp-p${p.id} .health-fill`); const batBar = document.querySelector(`#bat-p${p.id} .battery-fill`);
                 if(hpBar) hpBar.style.width = Math.min(100, Math.max(0, p.hp)) + '%'; 
                 if(batBar) batBar.style.width = p.battery + '%';
 
@@ -625,33 +542,21 @@
                     document.getElementById(i===0 ? 'crosshair-p1' : 'crosshair-p2').style.display = 'none';
                 }
 
-                // Items
-                for (let j = Sys.items.length - 1; j >= 0; j--) {
-                    const item = Sys.items[j];
-                    if (item.obj.position.distanceTo(p.obj.position) < 3) {
-                        if (item.type === 'battery' && p.battery < 100) {
-                            p.battery = 100; scene.remove(item.obj); Sys.items.splice(j, 1);
-                        }
-                    }
-                }
+                for (let j = Sys.items.length - 1; j >= 0; j--) { const item = Sys.items[j]; if (item.obj.position.distanceTo(p.obj.position) < 3) { if (item.type === 'battery' && p.battery < 100) { p.battery = 100; scene.remove(item.obj); Sys.items.splice(j, 1); } } }
             });
 
             const zSpeed = 5.5;
             if (frameCount % 4 === 0) { 
                 Sys.zombies.forEach(z => {
                     let closest = 999, target = null;
-                    Sys.players.forEach(p => { 
-                        if (p.isDead) return; 
-                        const d = p.obj.position.distanceTo(z.obj.position); 
-                        if(d < closest && p.hp > 0) { closest = d; target = p; } 
-                    });
+                    Sys.players.forEach(p => { if (p.isDead) return; const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
                     if(target && closest < 80) {
                         z.obj.lookAt(target.obj.position.x, 9, target.obj.position.z);
                         const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); z.obj.position.addScaledVector(fwd, zSpeed * dt * 4); 
                         if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt * 4); 
                         if(closest < 2.5 && Math.random() < 0.04 && !target.isDead) { 
                             target.hp -= 10; playSound('hurt');
-                            const ov = document.getElementById('damage-overlay'); ov.style.opacity = 0.5; setTimeout(()=>ov.style.opacity=0, 100); 
+                            triggerDamageFlash(target.id === 1 ? 0 : 1); 
                         }
                     }
                     if(z.sound && target) z.sound.setPlaybackRate(Math.min(1.0, 1 + (80 - closest) / 80)); 
@@ -660,11 +565,7 @@
                  Sys.zombies.forEach(z => {
                     let closest = 999, target = null;
                     Sys.players.forEach(p => { if(p.isDead) return; const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
-                    if(target && closest < 80) {
-                        const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); 
-                        z.obj.position.addScaledVector(fwd, zSpeed * dt);
-                        if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt);
-                    }
+                    if(target && closest < 80) { const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); z.obj.position.addScaledVector(fwd, zSpeed * dt); if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt); }
                 });
             }
 
@@ -674,10 +575,14 @@
             
             Sys.players.forEach((p,i)=>{
                 if(p.isDead) return; 
-                if(p.model) p.model.visible = false;
+                if(p.model) p.model.visible = (p.cameraMode === 1);
                 if(Sys.players.length === 1) { p.cam.aspect=w/h; p.cam.updateProjectionMatrix(); renderer.setViewport(0,0,w,h); renderer.setScissor(0,0,w,h); renderer.setScissorTest(true); renderer.render(scene, p.cam); } 
-                else { const l=i===0?0:w/2; p.cam.aspect=(w/2)/h; p.cam.updateProjectionMatrix(); renderer.setViewport(l,0,w/2,h); renderer.setScissor(l,0,w/2,h); renderer.setScissorTest(true); renderer.render(scene, p.cam); } 
-                if(p.model) p.model.visible = true;
+                else { 
+                    const l=i===0?0:w/2; p.cam.aspect=(w/2)/h; p.cam.updateProjectionMatrix(); renderer.setViewport(l,0,w/2,h); renderer.setScissor(l,0,w/2,h); renderer.setScissorTest(true); 
+                    if(p.model && i===0 && Sys.players[1]) Sys.players[1].model.visible = true;
+                    if(p.model && i===1 && Sys.players[0]) Sys.players[0].model.visible = true;
+                    renderer.render(scene, p.cam); 
+                } 
                 renderer.clearDepth(); 
             });
         }
