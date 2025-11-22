@@ -3,27 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: LEVEL 0 REALISM</title>
+    <title>Backrooms: SINGLEPLAYER TOUCH FIX</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
         
         /* UI LAYER */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 
-        /* HEALTH BARS */
+        /* HUD ELEMENTS (Health, Battery, Damage Flash, Crosshair) */
         .stat-bar-container { position: absolute; height: 20px; width: 200px; background: rgba(0,0,0,0.5); border: 2px solid white; border-radius: 10px; overflow: hidden; display: none; }
         .health-fill { width: 100%; height: 100%; background: #ff0000; transition: width 0.2s; }
-        
-        /* BATTERY BARS */
         .battery-bar-container { position: absolute; height: 10px; width: 200px; background: rgba(0,0,0,0.5); border: 1px solid #4aa8ff; border-radius: 5px; overflow: hidden; display: none; }
         .battery-fill { width: 100%; height: 100%; background: #4aa8ff; transition: width 0.5s; }
-
-        /* DAMAGE FLASH */
         .damage-flash { position: absolute; top: 0; height: 100%; background: red; opacity: 0; pointer-events: none; transition: opacity 0.1s; z-index: 5; }
         #dmg-p1 { left: 0; width: 100%; } 
         #dmg-p2 { right: 0; width: 50%; display: none; }
-
-        /* CROSSHAIR */
         .crosshair { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 20px; height: 20px; pointer-events: none; z-index: 500; display: none; }
         .crosshair:before, .crosshair:after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 2px black; }
         .crosshair:before { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
@@ -37,14 +31,26 @@
         #join-alert { position: absolute; top: 20%; width: 100%; text-align: center; color: #00ff00; font-size: 24px; font-weight: bold; text-shadow: 1px 1px 0 #000; display: none; z-index: 150; }
         #pause-screen h1 { color: #ffff55; }
 
-        /* CONTROLS */
-        #touch-ui { display: none; z-index: 100; }
+        /* TOUCH CONTROLS (Single Player Structure) */
+        #touch-ui { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: none; z-index: 100; pointer-events: none; /* Bu katman tıklamaları geçirmeli */
+        }
         #joystick-zone { position: absolute; bottom: 50px; left: 50px; width: 140px; height: 140px; background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2); border-radius: 50%; pointer-events: auto; touch-action: none; }
         #joystick-knob { position: absolute; top: 50%; left: 50%; width: 60px; height: 60px; background: rgba(255, 200, 0, 0.6); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; }
         #touch-right-zone { position: absolute; top: 0; right: 0; width: 50%; height: 100%; pointer-events: auto; z-index: 20; touch-action: none; }
-        #btn-jump { position: absolute; bottom: 60px; right: 40px; width: 90px; height: 90px; border-radius: 50%; background: rgba(200, 200, 200, 0.3); border: 2px solid rgba(255,255,255,0.4); pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px; touch-action: none; }
-        #btn-attack { position: absolute; bottom: 60px; right: 150px; width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 0, 0, 0.6); border: 2px solid rgba(255, 100, 100, 0.8); pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 12px; touch-action: none; }
-        #btn-flashlight { position: absolute; bottom: 180px; right: 150px; width: 70px; height: 70px; border-radius: 50%; background: rgba(255, 255, 0, 0.6); border: 2px solid rgba(255, 255, 100, 0.8); pointer-events: auto; z-index: 30; display: flex; align-items: center; justify-content: center; color: black; font-weight: bold; font-size: 12px; touch-action: none; }
+        
+        .touch-btn { 
+            position: absolute; border-radius: 50%; pointer-events: auto; z-index: 30; 
+            display: flex; align-items: center; justify-content: center; color: white; 
+            font-weight: bold; font-size: 12px; touch-action: none; 
+        }
+
+        #btn-jump { @extend .touch-btn; bottom: 60px; right: 40px; width: 90px; height: 90px; background: rgba(200, 200, 200, 0.3); border: 2px solid rgba(255,255,255,0.4); font-size: 14px; }
+        #btn-attack { @extend .touch-btn; bottom: 60px; right: 150px; width: 70px; height: 70px; background: rgba(255, 0, 0, 0.6); border: 2px solid rgba(255, 100, 100, 0.8); }
+        #btn-flashlight { @extend .touch-btn; bottom: 180px; right: 150px; width: 70px; height: 70px; background: rgba(255, 255, 0, 0.6); border: 2px solid rgba(255, 255, 100, 0.8); color: black; }
+        #btn-sprint { @extend .touch-btn; bottom: 180px; right: 40px; width: 70px; height: 70px; background: rgba(0, 150, 255, 0.6); border: 2px solid rgba(100, 200, 255, 0.8); }
+
 
         /* MENU */
         #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #111; color: #ffea00; z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; }
@@ -77,9 +83,10 @@
     <div id="touch-ui">
         <div id="joystick-zone"><div id="joystick-knob"></div></div>
         <div id="touch-right-zone"></div>
-        <div id="btn-attack">ATTACK</div>
-        <div id="btn-jump">JUMP</div> 
-        <div id="btn-flashlight">LIGHT</div>
+        <div id="btn-attack" class="touch-btn">ATTACK</div>
+        <div id="btn-jump" class="touch-btn">JUMP</div> 
+        <div id="btn-flashlight" class="touch-btn">LIGHT</div>
+        <div id="btn-sprint" class="touch-btn">SPRINT</div> 
     </div>
 
     <div id="menu">
@@ -90,7 +97,7 @@
             Mode Selection:<br><button id="btn-single" class="btn">SINGLEPLAYER</button><button id="btn-multi" class="btn">MULTIPLAYER</button>
         </div>
         <button id="btn-start" class="btn" style="display:none; background:#d4d400; color:black; font-weight:bold; padding:20px 50px;">START</button>
-        <p style="font-size:12px; color:#666;">Controls: R1=Attack, O=Light, X=Jump, Square=View<br>Player 2 press Start twice.</p>
+        <p style="font-size:12px; color:#666;">Controls: R1=Attack, O=Light, X=Jump, Square=View, L1=Sprint<br>Player 2 press Start twice.</p>
         <button id="btn-touch-sel" class="btn" style="background:#0055aa; color:white; padding:10px;">SELECT TOUCH CONTROLS</button>
     </div>
 
@@ -101,15 +108,22 @@
         const InputMap = { p1: null, p2: null };
         const P2JoinData = { lastPressTime: 0, presses: 0 };
         const PauseData = { lastState: false };
-        const GPState = { p1Light: false, p2Light: false, p1Cam: false, p2Cam: false };
-        const PHYS = { speed: 12.5, gravity: 80.0, jumpForce: 25.0, lookSpeed: 0.007 }; 
-        const WS = 80, BS = 10; // MAP BOYUTU BÜYÜTÜLDÜ (Backrooms ölçeği)
-        let map = [], mapTypes = [];
+        const GPState = { p1Light: false, p2Light: false, p1Cam: false, p2Cam: false, p1Sprint: false, p2Sprint: false }; 
+        
+        const PHYS = { 
+            speed: 12.5, 
+            sprintSpeed: 25.0, 
+            gravity: 80.0, 
+            jumpForce: 25.0, 
+            lookSpeed: 0.007 
+        }; 
+        
+        const WS = 80, BS = 10; 
+        let map = [], mapTypes = []; 
         let isAudioContextInitiated = false; 
         let fps = 0, frameCount = 0, lastUpdate = 0;
         const fpsElement = document.getElementById('fps-counter');
 
-        // --- HORROR SYSTEM ---
         const Horror = { nextGlitchTime: Date.now() + 10000, nextFlickerTime: Date.now() + 15000 };
 
         const Sounds = {};
@@ -147,10 +161,39 @@
             el.addEventListener('touchstart', initAudioContext, { once: true });
         });
         
+        window.setMode = (m) => { 
+            Sys.mode = m; 
+            document.getElementById('p2-slot').style.display = m===2 ? 'block' : 'none'; 
+            document.getElementById('controls-hint').style.display = 'none'; 
+            
+            Sys.ready = 0; InputMap.p1 = null; InputMap.p2 = null;
+            document.getElementById('p1-slot').innerText = 'PLAYER 1: Waiting...';
+            document.getElementById('p1-slot').classList.remove('active-slot');
+            document.getElementById('p2-slot').innerText = 'PLAYER 2: Waiting...';
+            document.getElementById('p2-slot').classList.remove('active-slot');
+            document.getElementById('btn-start').style.display = 'none';
+            
+            checkInput(); 
+        };
+
         document.getElementById('btn-single').addEventListener('click', () => { playClick(); setMode(1); });
         document.getElementById('btn-multi').addEventListener('click', () => { playClick(); setMode(2); });
         document.getElementById('btn-start').addEventListener('click', () => { playClick(); startGame(); });
-        document.getElementById('btn-touch-sel').addEventListener('click', () => { playClick(); assignTouch(); });
+        
+        window.assignTouch = () => { 
+            // Sadece P1'i atar, çünkü artık sadece P1'in UI'ını kullanıyoruz.
+            if(Sys.mode === 1) {
+                assign('touch', 0); 
+            } else if (Sys.mode === 2) {
+                 // Çoklu modda dokunmatik geçici olarak desteklenmiyor (hata sebebi), klavye/gamepad'e yönlendirilir.
+                alert("Multiplayer dokunmatik kontrolü henüz stabil değil. Lütfen Gamepad veya Klavye kullanın.");
+            }
+        }; 
+
+        document.getElementById('btn-touch-sel').addEventListener('click', () => { 
+            playClick(); 
+            assignTouch(); 
+        });
 
         const tl = new THREE.TextureLoader();
         function loadTex(path, repeatY) {
@@ -159,18 +202,16 @@
             if (repeatY > 1) t.repeat.set(1, repeatY); return t;
         }
         
-        // BACKROOMS TEXTURES (Renklendirilmiş)
         const texMain = { base: loadTex('./photos/hardened_clay_stained_magenta.png', 7), glass: loadTex('./photos/glass_orange.png', 7) };
         const texFloor = { main: loadTex('./photos/hardened_clay_stained_magenta.png', 1), ceil: loadTex('./photos/acacia_trapdoor.png', 1) };
         
         const matList = {
-            // SARI DUVARLAR (Backrooms Yellow)
             backroomsWall: new THREE.MeshLambertMaterial({ map: texMain.base, color: 0xe6c85d }), 
-            // ZEMİN (Kirli Sarı/Kahve)
             backroomsFloor: new THREE.MeshLambertMaterial({ map: texFloor.main, color: 0xc2b280 }), 
-            // TAVAN (Ofis Tavanı gibi açık)
+            backroomsFloorWet: new THREE.MeshLambertMaterial({ map: texFloor.main, color: 0x8291a1 }), 
             backroomsCeil: new THREE.MeshLambertMaterial({ map: texFloor.ceil, color: 0xeeeeee }),
-            battery: new THREE.MeshBasicMaterial({ color: 0xffcc00, wireframe: false })
+            battery: new THREE.MeshBasicMaterial({ color: 0xffcc00, wireframe: false }),
+            hpKit: new THREE.MeshBasicMaterial({ color: 0xff0000, wireframe: false })
         };
 
         function createHumanoid(isZombie) {
@@ -187,14 +228,27 @@
             return group;
         }
         
-        window.setMode = (m) => { Sys.mode = m; if(m===2) document.getElementById('p2-slot').style.display = 'block'; document.getElementById('controls-hint').style.display = 'none'; checkInput(); };
-        window.assignTouch = () => assign('touch', 0);
         function checkInput() { if(Sys.active) return; const gps = navigator.getGamepads ? navigator.getGamepads() : []; for(let i=0; i<gps.length; i++) { if(gps[i] && gps[i].buttons.some(b=>b.pressed)) assign('gamepad', i); } requestAnimationFrame(checkInput); }
-        const keys = {}; window.addEventListener('keydown', e => { keys[e.code] = true; if(!Sys.active && ['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); if(Sys.active && e.code === 'KeyF') attack(0); if(Sys.active && e.code === 'KeyL') toggleFlashlight(Sys.players[0]); if(Sys.active && e.code === 'KeyP') togglePerspective(Sys.players[0]); }); window.addEventListener('keyup', e => keys[e.code] = false);
+        
+        const keys = {}; 
+        window.addEventListener('keydown', e => { 
+            keys[e.code] = true; 
+            if(!Sys.active && ['KeyW','ArrowUp'].includes(e.code)) assign('keyboard', 0); 
+            if(Sys.active && e.code === 'KeyF') attack(0); 
+            if(Sys.active && e.code === 'KeyL') toggleFlashlight(Sys.players[0]); 
+            if(Sys.active && e.code === 'KeyP') togglePerspective(Sys.players[0]);
+            
+            if(Sys.active && e.code === 'ShiftLeft' && Sys.players[0]) {
+                Sys.players[0].isSprinting = !Sys.players[0].isSprinting; 
+            }
+        }); 
+        window.addEventListener('keyup', e => { 
+            keys[e.code] = false;
+        });
         
         window.respawn = (pIdx) => {
             if(Sys.players[pIdx]) {
-                const p = Sys.players[pIdx]; p.hp = 100; p.battery = 100; p.isDead = false;
+                const p = Sys.players[pIdx]; p.hp = 100; p.battery = 100; p.isDead = false; p.isSprinting = false;
                 p.obj.position.set(p.id===1?-10:10, 9, 0);
                 document.getElementById(pIdx===0 ? 'go-p1' : 'go-p2').style.display = 'none';
                 document.getElementById(pIdx===0 ? 'crosshair-p1' : 'crosshair-p2').style.display = 'block';
@@ -209,13 +263,32 @@
         }
 
         function assign(type, idx) {
-            if(Sys.ready >= Sys.mode) return;
-            if(InputMap.p1 && InputMap.p1.type === type && InputMap.p1.index === idx) return;
-            const pid = InputMap.p1 ? 2 : 1; InputMap['p'+pid] = { type, index: idx };
-            document.getElementById('p'+pid+'-slot').innerText = `PLAYER ${pid}: ${type.toUpperCase()} READY`;
-            document.getElementById('p'+pid+'-slot').classList.add('active-slot');
-            if(type==='touch') document.getElementById('btn-touch-sel').style.display='none';
-            Sys.ready++; if(Sys.ready === Sys.mode) document.getElementById('btn-start').style.display='block';
+            const isP1Assigned = !!InputMap.p1;
+            const isP2Assigned = !!InputMap.p2;
+
+            if (Sys.mode === 1) {
+                if (isP1Assigned) return;
+                InputMap.p1 = { type, index: idx };
+                document.getElementById('p1-slot').innerText = `PLAYER 1: ${type.toUpperCase()} READY`;
+                document.getElementById('p1-slot').classList.add('active-slot');
+                Sys.ready = 1;
+
+            } else { 
+                if (!isP1Assigned) {
+                    InputMap.p1 = { type, index: idx };
+                    document.getElementById('p1-slot').innerText = `PLAYER 1: ${type.toUpperCase()} READY`;
+                    document.getElementById('p1-slot').classList.add('active-slot');
+                    Sys.ready = 1;
+                } 
+                else if (!isP2Assigned && (type !== 'touch' || (type === 'touch' && idx === 1))) {
+                    InputMap.p2 = { type, index: idx };
+                    document.getElementById('p2-slot').innerText = `PLAYER 2: ${type.toUpperCase()} READY`;
+                    document.getElementById('p2-slot').classList.add('active-slot');
+                    Sys.ready = 2;
+                }
+            }
+
+            if(Sys.ready === Sys.mode) document.getElementById('btn-start').style.display='block';
         }
 
         window.startGame = () => {
@@ -226,19 +299,38 @@
 
             document.getElementById('hp-p1').style.display = 'block'; document.getElementById('bat-p1').style.display = 'block';
             c1.style.display = 'block';
+            
+            // Touch UI'ı başta gizle
+            document.getElementById('touch-ui').style.display = 'none'; 
+            document.getElementById('split-line').style.display='none'; 
 
             if(Sys.mode === 2) {
                 c1.style.left = '25%'; c2.style.display = 'block'; c2.style.left = '75%'; 
                 document.getElementById('hp-p2').style.display = 'block'; document.getElementById('bat-p2').style.display = 'block';
                 p1GO.style.width = '50%'; p1GO.style.left = '0'; p2GO.style.width = '50%'; p2GO.style.left = '50%';
                 d1.style.width = '50%'; d2.style.display = 'block';
-            } else {
+                document.getElementById('split-line').style.display='block';
+                
+                // Çoklu modda touch atanmışsa, UI'ı aç (split-screen modunda touch-ui'ın nasıl görüneceği CSS'te tanımlı)
+                if (InputMap.p1?.type === 'touch' || InputMap.p2?.type === 'touch') { 
+                    // BU KISIM ŞU AN DEVRE DIŞI BIRAKILDI, ZATEN ÇOKLU MODDA TOUCH TAVSİYE EDİLMİYOR.
+                    // Eğer gerekiyorsa burası yeniden yazılmalı.
+                }
+
+            } else { 
                 c1.style.left = '50%'; p1GO.style.width = '100%'; p1GO.style.left = '0';
                 d1.style.width = '100%'; d2.style.display = 'none';
+                
+                // Tek kişilik modda touch atanmışsa, tek UI'ı tam ekran göster
+                if (InputMap.p1?.type === 'touch') { 
+                    document.getElementById('touch-ui').style.display = 'block';
+                    document.getElementById('touch-ui').style.width = '100%'; 
+                }
             }
 
+            if(InputMap.p1?.type==='touch' || InputMap.p2?.type==='touch') initTouch(); 
+
             if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
-            if(InputMap.p1?.type==='touch' || InputMap.p2?.type==='touch') initTouch();
             if(InputMap.p1?.type==='keyboard' || InputMap.p2?.type==='keyboard') document.body.requestPointerLock();
             playRandomMusic();
             initEngine();
@@ -248,36 +340,62 @@
         function initEngine() {
             Sys.active = true; clock = new THREE.Clock(); scene = new THREE.Scene();
             
-            // BACKROOMS ATMOSFERİ: SARI SİS
             scene.background = new THREE.Color(0x999900); 
-            scene.fog = new THREE.FogExp2(0x998800, 0.025); // Sonsuzluk hissi için yoğun sarı sis
+            scene.fog = new THREE.FogExp2(0x998800, 0.025); 
             
             const light = new THREE.AmbientLight(0xffddaa, 0.3); scene.add(light); 
             renderer = new THREE.WebGLRenderer({ antialias: false }); renderer.setSize(window.innerWidth, window.innerHeight); renderer.autoClear = false; document.body.appendChild(renderer.domElement);
             generateWorld();
             if(InputMap.p1) createPlayer(1, InputMap.p1);
-            if(InputMap.p2) { createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display='block'; }
+            if(InputMap.p2) { createPlayer(2, InputMap.p2); }
             if (audioListener && Sys.players[0]) Sys.players[0].cam.add(audioListener);
             setInterval(trySpawnZombies, 10000); setInterval(trySpawnItems, 30000); 
             animate();
         }
 
-        // --- BACKROOMS HARİTA ALGORİTMASI ---
+        // --- EŞYA OLUŞTURMA ---
+        function createBattery() { const g = new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16); const m = matList.battery; const mesh = new THREE.Mesh(g, m); mesh.rotation.x = Math.PI/2; return { type: 'battery', obj: mesh }; }
+        function createHPPotion() {
+            const g = new THREE.BoxGeometry(1.5, 1.5, 1.5);
+            const m = matList.hpKit; 
+            const mesh = new THREE.Mesh(g, m);
+            return { type: 'hp_kit', obj: mesh };
+        }
+        
+        function trySpawnItems() {
+            if(Sys.paused || Sys.items.length >= 10) return;
+            const rx = Math.floor(Math.random()*WS), rz = Math.floor(Math.random()*WS);
+            const px = (rx-WS/2)*BS, pz = (rz-WS/2)*BS;
+
+            if(map[rx] && map[rx][rz] === 0) {
+                let item;
+                if (Math.random() < 0.3) {
+                    item = createHPPotion();
+                } else {
+                    item = createBattery();
+                }
+                
+                item.obj.position.set(px, 9.5, pz); scene.add(item.obj); Sys.items.push(item); 
+            }
+        }
+
+        // --- HARİTA YARATMA (Islak Zemin Eklendi) ---
         function generateWorld() {
             const geo = new THREE.BoxGeometry(BS, BS*7, BS); 
-            // Devasa zemin ve tavan (Sonsuz hissi için)
             const floorGeo = new THREE.PlaneGeometry(WS*BS*4, WS*BS*4);
             
             const f = new THREE.Mesh(floorGeo, matList.backroomsFloor); f.rotation.x = -Math.PI/2; f.position.set(0,0,0); scene.add(f);
             const c = new THREE.Mesh(floorGeo, matList.backroomsCeil); c.rotation.x = Math.PI/2; c.position.set(0,BS*7,0); scene.add(c);
 
-            for(let x=0; x<WS; x++) { map[x] = []; for(let z=0; z<WS; z++) map[x][z] = 1; } 
+            for(let x=0; x<WS; x++) { map[x] = []; mapTypes[x] = []; for(let z=0; z<WS; z++) { map[x][z] = 1; mapTypes[x][z] = 0; } } 
 
-            // Rastgele Odalar ve Koridorlar (Level 0 Tarzı)
-            // Büyük bir labirent oluşturmak için "Drunkard's Walk" benzeri yöntem
             let crawler = {x: WS/2, z: WS/2};
-            for (let i = 0; i < WS * WS * 0.6; i++) { // Haritanın %60'ını kaz
-                map[Math.floor(crawler.x)][Math.floor(crawler.z)] = 0;
+            for (let i = 0; i < WS * WS * 0.6; i++) { 
+                const cx = Math.floor(crawler.x), cz = Math.floor(crawler.z);
+                if (cx >= 0 && cx < WS && cz >= 0 && cz < WS) {
+                    map[cx][cz] = 0;
+                    if (Math.random() < 0.10) mapTypes[cx][cz] = 1;
+                }
                 const dir = Math.floor(Math.random() * 4);
                 if (dir === 0 && crawler.x < WS-2) crawler.x++;
                 else if (dir === 1 && crawler.x > 1) crawler.x--;
@@ -285,55 +403,53 @@
                 else if (dir === 3 && crawler.z > 1) crawler.z--;
             }
 
-            // Başlangıç alanını temizle (Geniş bir lobi)
             const center = Math.floor(WS/2);
             for(let x=center-4; x<=center+4; x++) {
                 for(let z=center-4; z<=center+4; z++) {
                     map[x][z] = 0;
+                    mapTypes[x][z] = 0; 
                 }
             }
 
-            // Duvarları oluştur
             for(let x=0; x<WS; x++) { for(let z=0; z<WS; z++) {
                 const px = (x-WS/2)*BS, pz = (z-WS/2)*BS;
                 if(map[x][z] === 1) {
-                    // Sadece komşusu boş olan duvarları renderla (Optimizasyon)
-                    // Basitlik için hepsini renderlıyoruz ama Backrooms duvar materyaliyle
                     const b = new THREE.Mesh(geo, matList.backroomsWall); 
                     b.position.set(px,BS*3.5,pz); scene.add(b);
+                }
+                
+                if (mapTypes[x][z] === 1) {
+                     const wetSpot = new THREE.Mesh(new THREE.PlaneGeometry(BS, BS), matList.backroomsFloorWet);
+                     wetSpot.rotation.x = -Math.PI/2;
+                     wetSpot.position.set(px, 0.01, pz); 
+                     scene.add(wetSpot);
                 }
             }}
         }
         
-        function createBattery() { const g = new THREE.CylinderGeometry(0.7, 0.7, 0.3, 16); const m = matList.battery; const mesh = new THREE.Mesh(g, m); mesh.rotation.x = Math.PI/2; return { type: 'battery', obj: mesh }; }
-        function trySpawnItems() {
-            if(Sys.paused || Sys.items.length >= 10) return;
-            const rx = Math.floor(Math.random()*WS), rz = Math.floor(Math.random()*WS);
-            const px = (rx-WS/2)*BS, pz = (rz-WS/2)*BS;
-            if(map[rx] && map[rx][rz] === 0) {
-                const item = createBattery(); item.obj.position.set(px, 9.5, pz); scene.add(item.obj); Sys.items.push(item); 
-            }
-        }
-
         function createPlayer(id, inp) {
             const o = new THREE.Object3D(); const c = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 150); o.add(c);
             
-            // IŞIK DÜZELTMESİ: SpotLight ve Target'ı Kameraya ekle
             const flashlight = new THREE.SpotLight(0xffccaa, 0, 50, Math.PI/5, 0.5, 1); 
             flashlight.position.set(0, 0, 0); 
-            flashlight.target.position.set(0, 0, -1); // İleri bakıyor
+            flashlight.target.position.set(0, 0, -1); 
             c.add(flashlight); 
-            c.add(flashlight.target); // Target da kamerayla döner
+            c.add(flashlight.target); 
 
             const steve = createHumanoid(false); steve.position.y = -9.0; o.add(steve);
             const l = new THREE.PointLight(0xffaa00, 0.0, 15); l.position.set(0,0,0); o.add(l);
             
-            // Başlangıç pozisyonu (Map ortası)
             o.position.set(id===1?-10:10, 9, 0); 
             scene.add(o);
             
             const stepAudio = new Audio('./sounds/step.mp3'); stepAudio.loop = true; stepAudio.volume = 0.2;
-            Sys.players.push({ id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(), onGround: false, hp: 100, isDead: false, model: steve, stepAudio: stepAudio, battery: 100, isFlashlightOn: false, flashlight: flashlight, cameraY: c.position.y, cameraMode: 0, lastAttack: 0 });
+            Sys.players.push({ 
+                id, obj: o, cam: c, inp, rotX: 0, vel: new THREE.Vector3(), onGround: false, hp: 100, isDead: false, 
+                model: steve, stepAudio: stepAudio, battery: 100, isFlashlightOn: false, flashlight: flashlight, 
+                cameraY: c.position.y, cameraMode: 0, lastAttack: 0,
+                isSprinting: false, 
+                lastStep: 0 
+            });
         }
 
         function toggleFlashlight(player) {
@@ -358,7 +474,7 @@
                         const zObj = new THREE.Object3D(); const zModel = createHumanoid(true); zModel.position.y = -9.0; zObj.add(zModel);
                         zObj.position.set(px, 9, pz); scene.add(zObj); 
                         const zombieSound = playPositionalSound(zObj, './sounds/zombie.mp3', 0.6, true);
-                        Sys.zombies.push({ obj: zObj, hp: 3, sound: zombieSound });
+                        Sys.zombies.push({ obj: zObj, hp: 3, sound: zombieSound, lastHitTime: 0 }); 
                         spawned++; 
                     }
                 }
@@ -375,7 +491,6 @@
             if(p.cameraMode===0) { p.cam.position.y -= 0.2; setTimeout(()=>p.cam.position.y+=0.2, 100); }
             let hit = false;
             
-            // VURMA YÖNÜ: Kameranın Dünya Koordinatındaki Yönü
             const pDir = new THREE.Vector3(); 
             p.cam.updateMatrixWorld(); 
             p.cam.getWorldDirection(pDir); 
@@ -385,78 +500,168 @@
 
             for(let i=0; i<Sys.zombies.length; i++) {
                 const z = Sys.zombies[i];
-                const toZombie = z.obj.position.clone().sub(p.obj.position); // Oyuncudan Zombiye vektör
-                
-                // Yükseklik farkını azalt (Zombi ayaklarına bakma sorunu olmaması için)
+                const toZombie = z.obj.position.clone().sub(p.obj.position); 
                 toZombie.y = 0; 
-                const flatDir = pDir.clone(); flatDir.y = 0; flatDir.normalize(); // Sadece yatay düzlemde bakış
+                const flatDir = pDir.clone(); flatDir.y = 0; flatDir.normalize(); 
 
                 const dist = toZombie.length(); 
                 toZombie.normalize();
                 
-                // Normalde 3D dot product kullanırız ama zombi hitbox'ı büyük olsun
-                const dot = pDir.dot(toZombie.clone().normalize()); // 3D Dot
+                const dot = pDir.dot(toZombie.clone().normalize()); 
                 
                 if(dist < reach && dot > 0.9) { 
                     z.hp--; hit=true; playSound('attack'); playSound('hurt');
                     z.obj.children[0].children.forEach(m => { if(m.material.color) m.material.color.setHex(0xff0000); });
                     setTimeout(() => { if(z.obj) z.obj.children[0].children.forEach((m,k) => { const def = (k===0)?0x4a6b4a:(k===4||k===5||k===6)?0x3d5c5c:(k===7||k===8)?0x2a2a5c:0x111111; if(m.material.color) m.material.color.setHex(def); }); }, 100);
                     const k = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(8); z.obj.position.add(k);
+                    z.lastHitTime = now; 
                     
                     if(z.hp <= 0) { 
                         scene.remove(z.obj); if(z.sound) z.sound.stop(); Sys.zombies.splice(i, 1); 
-                        p.hp += 25; 
+                        p.hp = Math.min(100, p.hp + 25); 
                     } 
                     break;
                 }
             }
-            if(hit) { /* Vurma başarılı */ } 
-            // Sadece vurunca ses çıksın dediğiniz için boşa sallayınca ses yok.
         }
 
         function joinPlayer2(gpIndex) { if(Sys.mode === 2) return; Sys.mode = 2; InputMap.p2 = { type: 'gamepad', index: gpIndex }; createPlayer(2, InputMap.p2); document.getElementById('split-line').style.display = 'block'; document.getElementById('join-alert').style.display = 'block'; setTimeout(()=>document.getElementById('join-alert').style.display='none', 3000); if(InputMap.p1.type === 'touch') { document.getElementById('touch-ui').style.width = '50%'; document.getElementById('touch-ui').style.left = '0'; } }
         
         function handleGamepad() {
             const gps = navigator.getGamepads(); if(!gps) return;
-            if(InputMap.p1?.type === 'gamepad') { 
+            if(InputMap.p1?.type === 'gamepad' && Sys.players[0]) { 
                 const gp = gps[InputMap.p1.index]; 
                 if(gp) { 
                     if(gp.buttons[9].pressed) { if(!PauseData.lastState && Sys.mode===1) { Sys.paused = !Sys.paused; document.getElementById('pause-screen').style.display = Sys.paused?'flex':'none'; } PauseData.lastState=true; } else PauseData.lastState=false; 
                     if(gp.buttons[5].pressed) attack(0); 
                     if(gp.buttons[1].pressed) { if (!GPState.p1Light) { toggleFlashlight(Sys.players[0]); GPState.p1Light = true; } } else GPState.p1Light = false;
                     if(gp.buttons[2].pressed) { if (!GPState.p1Cam) { togglePerspective(Sys.players[0]); GPState.p1Cam = true; } } else GPState.p1Cam = false;
+                    
+                    if(gp.buttons[4].pressed && !GPState.p1Sprint) {
+                        Sys.players[0].isSprinting = !Sys.players[0].isSprinting;
+                        GPState.p1Sprint = true;
+                    } else if (!gp.buttons[4].pressed) {
+                        GPState.p1Sprint = false;
+                    }
+                    
                     if(gp.buttons[0].pressed && Sys.players[0].onGround) { Sys.players[0].vel.y = PHYS.jumpForce; playSound('jump'); }
                 } 
             }
-            if(InputMap.p2?.type === 'gamepad') {
+            if(InputMap.p2?.type === 'gamepad' && Sys.players[1]) {
                 const gp = gps[InputMap.p2.index];
                 if(gp) {
                     if(gp.buttons[5].pressed) attack(1);
                     if(gp.buttons[1].pressed) { if (!GPState.p2Light) { toggleFlashlight(Sys.players[1]); GPState.p2Light = true; } } else GPState.p2Light = false;
                     if(gp.buttons[2].pressed) { if (!GPState.p2Cam) { togglePerspective(Sys.players[1]); GPState.p2Cam = true; } } else GPState.p2Cam = false;
+                    
+                    if(gp.buttons[4].pressed && !GPState.p2Sprint) {
+                        Sys.players[1].isSprinting = !Sys.players[1].isSprinting;
+                        GPState.p2Sprint = true;
+                    } else if (!gp.buttons[4].pressed) {
+                        GPState.p2Sprint = false;
+                    }
+
                     if(gp.buttons[0].pressed && Sys.players[1].onGround) { Sys.players[1].vel.y = PHYS.jumpForce; playSound('jump'); }
                 }
             }
             if(Sys.mode === 1 && !Sys.paused) { for(let i=0; i<gps.length; i++) { if(gps[i] && (!InputMap.p1 || InputMap.p1.index !== i)) { if(gps[i].buttons[9].pressed) { const now = Date.now(); if(now - P2JoinData.lastPressTime > 500) P2JoinData.presses = 0; if(now - P2JoinData.lastPressTime > 200) { P2JoinData.presses++; P2JoinData.lastPressTime = now; if(P2JoinData.presses >= 2) joinPlayer2(i); } } } } }
         }
 
-        const TouchData = { moveX: 0, moveZ: 0, lookX: 0, lookY: 0, jump: false, attack: false, flashlight: false, joyID: null, lookID: null };
+        const TouchData = { moveX: 0, moveZ: 0, lookX: 0, lookY: 0, jump: false, attack: false, flashlight: false, sprint: false, joyID: null, lookID: null };
+
         function initTouch() { 
-            const ui = document.getElementById('touch-ui'); const joyZone = document.getElementById('joystick-zone'); const joyKnob = document.getElementById('joystick-knob'); 
-            const lookZone = document.getElementById('touch-right-zone'); const jumpBtn = document.getElementById('btn-jump'); 
-            const attackBtn = document.getElementById('btn-attack'); const flashlightBtn = document.getElementById('btn-flashlight');
-            ui.style.display = 'block'; if(Sys.mode === 2) { const p1Touch = InputMap.p1?.type === 'touch'; ui.style.left = p1Touch ? '0' : '50%'; ui.style.width = '50%'; } 
+            // Tek kişilik (eski) UI yapısını kullan
+            const ui = document.getElementById('touch-ui'); 
+            const joyZone = document.getElementById('joystick-zone'); 
+            const joyKnob = document.getElementById('joystick-knob'); 
+            const lookZone = document.getElementById('touch-right-zone'); 
+            const jumpBtn = document.getElementById('btn-jump'); 
+            const attackBtn = document.getElementById('btn-attack'); 
+            const flashlightBtn = document.getElementById('btn-flashlight');
+            const sprintBtn = document.getElementById('btn-sprint'); 
+
+            // UI'ın event'ları yakalamasını sağla
+            ui.style.pointerEvents = 'auto'; 
+            
             let joyStart = {x:0, y:0}; 
-            joyZone.addEventListener('touchstart', e => { e.preventDefault(); const t = e.changedTouches[0]; TouchData.joyID = t.identifier; joyStart.x = t.clientX; joyStart.y = t.clientY; }); 
-            joyZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { let dx = e.changedTouches[i].clientX - joyStart.x; let dy = e.changedTouches[i].clientY - joyStart.y; const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50); const angle = Math.atan2(dy, dx); joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`; TouchData.moveX = (Math.cos(angle)*dist)/50; TouchData.moveZ = (Math.sin(angle)*dist)/50; } } }); 
-            joyZone.addEventListener('touchend', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.joyID) { TouchData.joyID = null; TouchData.moveX = 0; TouchData.moveZ = 0; joyKnob.style.transform = `translate(-50%, -50%)`; } } }); 
+            
+            // HAREKET JOSTICK
+            joyZone.addEventListener('touchstart', e => { 
+                e.preventDefault(); 
+                if (TouchData.joyID === null) {
+                    const t = e.changedTouches[0]; 
+                    TouchData.joyID = t.identifier; 
+                    joyStart.x = t.clientX; 
+                    joyStart.y = t.clientY; 
+                }
+            }); 
+            joyZone.addEventListener('touchmove', e => { 
+                e.preventDefault(); 
+                for(let i=0; i<e.changedTouches.length; i++) { 
+                    if(e.changedTouches[i].identifier === TouchData.joyID) { 
+                        let dx = e.changedTouches[i].clientX - joyStart.x; 
+                        let dy = e.changedTouches[i].clientY - joyStart.y; 
+                        const dist = Math.min(Math.sqrt(dx*dx+dy*dy), 50); 
+                        const angle = Math.atan2(dy, dx); 
+                        joyKnob.style.transform = `translate(calc(-50% + ${Math.cos(angle)*dist}px), calc(-50% + ${Math.sin(angle)*dist}px))`; 
+                        TouchData.moveX = (Math.cos(angle)*dist)/50; 
+                        TouchData.moveZ = (Math.sin(angle)*dist)/50; 
+                    } 
+                } 
+            }); 
+            joyZone.addEventListener('touchend', e => { 
+                e.preventDefault(); 
+                for(let i=0; i<e.changedTouches.length; i++) { 
+                    if(e.changedTouches[i].identifier === TouchData.joyID) { 
+                        TouchData.joyID = null; 
+                        TouchData.moveX = 0; 
+                        TouchData.moveZ = 0; 
+                        joyKnob.style.transform = `translate(-50%, -50%)`; 
+                    } 
+                } 
+            }); 
+            
+            // BAKIŞ KONTROLÜ
             let lookStart = {x:0, y:0}; 
-            lookZone.addEventListener('touchstart', e => { e.preventDefault(); if(e.target !== jumpBtn && e.target !== attackBtn && e.target !== flashlightBtn && !attackBtn.contains(e.target) && !flashlightBtn.contains(e.target)) { const t = e.changedTouches[0]; TouchData.lookID = t.identifier; lookStart.x = t.clientX; lookStart.y = t.clientY; } }); 
-            lookZone.addEventListener('touchmove', e => { e.preventDefault(); for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) { TouchData.lookX = (e.changedTouches[i].clientX - lookStart.x); TouchData.lookY = (e.changedTouches[i].clientY - lookStart.y); lookStart.x = e.changedTouches[i].clientX; lookStart.y = e.changedTouches[i].clientY; } } }); 
-            lookZone.addEventListener('touchend', e => { for(let i=0; i<e.changedTouches.length; i++) { if(e.changedTouches[i].identifier === TouchData.lookID) TouchData.lookID = null; } }); 
-            jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.jump = true; }); jumpBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.jump = false; }); 
-            attackBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.attack = true; }); attackBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.attack = false; }); 
+            lookZone.addEventListener('touchstart', e => { 
+                e.preventDefault(); 
+                 if (TouchData.lookID === null) {
+                    const t = e.changedTouches[0]; 
+                    TouchData.lookID = t.identifier; 
+                    lookStart.x = t.clientX; 
+                    lookStart.y = t.clientY; 
+                }
+            }); 
+            lookZone.addEventListener('touchmove', e => { 
+                e.preventDefault(); 
+                for(let i=0; i<e.changedTouches.length; i++) { 
+                    if(e.changedTouches[i].identifier === TouchData.lookID) { 
+                        TouchData.lookX = (e.changedTouches[i].clientX - lookStart.x); 
+                        TouchData.lookY = (e.changedTouches[i].clientY - lookStart.y); 
+                        lookStart.x = e.changedTouches[i].clientX; 
+                        lookStart.y = e.changedTouches[i].clientY; 
+                    } 
+                } 
+            }); 
+            lookZone.addEventListener('touchend', e => { 
+                for(let i=0; i<e.changedTouches.length; i++) { 
+                    if(e.changedTouches[i].identifier === TouchData.lookID) TouchData.lookID = null; 
+                } 
+            }); 
+            
+            // DÜĞMELER
+            jumpBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.jump = true; }); 
+            jumpBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.jump = false; }); 
+            
+            attackBtn.addEventListener('touchstart', e => { e.preventDefault(); TouchData.attack = true; }); 
+            attackBtn.addEventListener('touchend', e => { e.preventDefault(); TouchData.attack = false; }); 
+            
             flashlightBtn.addEventListener('touchstart', e => { e.preventDefault(); toggleFlashlight(Sys.players[0]); }); 
+            
+            sprintBtn.addEventListener('touchstart', e => { 
+                e.preventDefault(); 
+                if(Sys.players[0]) Sys.players[0].isSprinting = !Sys.players[0].isSprinting; 
+            }); 
         }
 
         let mx=0, my=0; document.addEventListener('mousemove', e => { if(document.pointerLockElement) { mx+=e.movementX; my+=e.movementY; } });
@@ -464,6 +669,15 @@
         function isWall(x, z) { const gx = Math.round(x/BS + WS/2); const gz = Math.round(z/BS + WS/2); if(gx<0||gx>=WS||gz<0||gz>=WS) return true; return map[gx] && map[gx][gz] === 1; }
 
         let headbobTime = 0;
+        
+        function checkFloorType(x, z) {
+             const gx = Math.round(x/BS + WS/2);
+             const gz = Math.round(z/BS + WS/2);
+             if (gx >= 0 && gx < WS && gz >= 0 && gz < WS) {
+                 return mapTypes[gx][gz];
+             }
+             return 0; 
+        }
 
         function handleHorror() {
             const now = Date.now();
@@ -489,6 +703,31 @@
             Sys.players.forEach((p, i) => {
                 if (p.isDead) return; 
                 let inputX = 0, inputZ = 0, rotY = 0, rotX = 0, isMoving = false; 
+                let baseSpeed = PHYS.speed;
+                let currentSpeed;
+
+                const onWetFloor = checkFloorType(p.obj.position.x, p.obj.position.z) === 1;
+                const speedModifier = onWetFloor ? 0.6 : 1.0; 
+                
+                const isPlayerSprinting = p.isSprinting && p.battery > 0 && p.onGround;
+                
+                if (isPlayerSprinting) {
+                    baseSpeed = PHYS.sprintSpeed;
+                    p.battery -= dt * 6; 
+                } else if (p.battery < 100 && !p.isFlashlightOn) {
+                    p.battery += dt * 1; 
+                }
+
+                if (p.isFlashlightOn) {
+                    p.battery -= dt * 3; 
+                }
+                
+                currentSpeed = baseSpeed * speedModifier; 
+
+                p.battery = Math.min(100, Math.max(0, p.battery)); 
+                if (p.battery <= 0) { p.isSprinting = false; if (p.isFlashlightOn) toggleFlashlight(p); }
+
+                // --- GİRİŞLER ---
 
                 if(p.inp.type === 'keyboard') { 
                     if(keys['KeyW']) inputZ = -1; if(keys['KeyS']) inputZ = 1; 
@@ -496,15 +735,19 @@
                     if(keys['Space'] && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
                     rotY = -mx * 0.006; rotX = -my * 0.006; 
                     if(keys['KeyE'] || keys['KeyR']) attack(i); 
-                    if(keys['KeyL']) { toggleFlashlight(Sys.players[0]); keys['KeyL'] = false; } 
-                    if(keys['KeyP']) { togglePerspective(Sys.players[0]); keys['KeyP'] = false; } 
                 }
                 else if(p.inp.type === 'touch') { 
-                    inputX = TouchData.moveX; inputZ = TouchData.moveZ; 
-                    if(TouchData.jump && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
-                    rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed; 
-                    if(TouchData.attack) { attack(i); TouchData.attack = false; } 
-                    TouchData.lookX=0; TouchData.lookY=0; 
+                    // Düzeltildi: Sadece Player 1 için geçerli genel TouchData objesi kullanılır
+                    if (p.id === 1) {
+                        inputX = TouchData.moveX; inputZ = TouchData.moveZ; 
+                        if(TouchData.jump && p.onGround) { p.vel.y = PHYS.jumpForce; playSound('jump'); } 
+                        rotY = -TouchData.lookX * PHYS.lookSpeed; rotX = -TouchData.lookY * PHYS.lookSpeed; 
+                        if(TouchData.attack) { attack(i); TouchData.attack = false; } 
+                        TouchData.lookX=0; TouchData.lookY=0; 
+                    } else {
+                        // P2 touch girişi desteklenmiyor (hata çözümüne odaklanmak için)
+                        return;
+                    }
                 }
                 else if(p.inp.type === 'gamepad') { 
                     const gp = navigator.getGamepads()[p.inp.index]; 
@@ -521,16 +764,27 @@
                 const fwd = new THREE.Vector3(0,0,1).applyQuaternion(p.obj.quaternion); fwd.y=0; fwd.normalize(); const rgt = new THREE.Vector3(1,0,0).applyQuaternion(p.obj.quaternion); rgt.y=0; rgt.normalize();
                 const move = new THREE.Vector3().addScaledVector(fwd, inputZ).addScaledVector(rgt, inputX); if(move.length()>1) move.normalize();
                 isMoving = move.lengthSq() > 0.01;
-                if (isMoving && p.onGround) { if (p.stepAudio.paused) p.stepAudio.play().catch(() => {}); if(p.cameraMode===0) { headbobTime += dt * 8; p.cam.position.y = p.cameraY + Math.sin(headbobTime) * 0.15; p.cam.position.x = Math.cos(headbobTime / 2) * 0.1; } } else { if (!p.stepAudio.paused) { p.stepAudio.pause(); p.stepAudio.currentTime = 0; } if(p.cameraMode===0) { p.cam.position.y = p.cameraY; p.cam.position.x = 0; headbobTime = 0; } }
                 
-                if (p.isFlashlightOn) { p.battery -= dt * 3; if (p.battery <= 0) { p.battery = 0; toggleFlashlight(p); } } else if (p.battery < 100) { p.battery += dt * 1; }
-                p.battery = Math.min(100, Math.max(0, p.battery)); 
+                if (isMoving && p.onGround) { 
+                    if (p.stepAudio.paused) p.stepAudio.play().catch(() => {}); 
+                    if(p.cameraMode===0) { 
+                        const bobSpeed = isPlayerSprinting ? 12 : 8; 
+                        headbobTime += dt * bobSpeed; 
+                        p.cam.position.y = p.cameraY + Math.sin(headbobTime) * 0.15; 
+                        p.cam.position.x = Math.cos(headbobTime / 2) * 0.1; 
+                    } 
+                } else { 
+                    if (!p.stepAudio.paused) { p.stepAudio.pause(); p.stepAudio.currentTime = 0; } 
+                    if(p.cameraMode===0) { p.cam.position.y = p.cameraY; p.cam.position.x = 0; headbobTime = 0; } 
+                }
                 
                 const hpBar = document.querySelector(`#hp-p${p.id} .health-fill`); const batBar = document.querySelector(`#bat-p${p.id} .battery-fill`);
                 if(hpBar) hpBar.style.width = Math.min(100, Math.max(0, p.hp)) + '%'; 
                 if(batBar) batBar.style.width = p.battery + '%';
 
-                p.vel.x = move.x * PHYS.speed; p.vel.z = move.z * PHYS.speed; p.vel.y -= PHYS.gravity * dt;
+                p.vel.x = move.x * currentSpeed; 
+                p.vel.z = move.z * currentSpeed; 
+                p.vel.y -= PHYS.gravity * dt;
                 p.obj.position.x += p.vel.x * dt; if(checkCol(p.obj.position)) p.obj.position.x -= p.vel.x * dt;
                 p.obj.position.z += p.vel.z * dt; if(checkCol(p.obj.position)) p.obj.position.z -= p.vel.z * dt;
                 p.obj.position.y += p.vel.y * dt; if(p.obj.position.y < 9.0) { p.obj.position.y = 9.0; p.onGround = true; p.vel.y = 0; } else p.onGround = false;
@@ -542,32 +796,72 @@
                     document.getElementById(i===0 ? 'crosshair-p1' : 'crosshair-p2').style.display = 'none';
                 }
 
-                for (let j = Sys.items.length - 1; j >= 0; j--) { const item = Sys.items[j]; if (item.obj.position.distanceTo(p.obj.position) < 3) { if (item.type === 'battery' && p.battery < 100) { p.battery = 100; scene.remove(item.obj); Sys.items.splice(j, 1); } } }
+                // EŞYA TOPLAMA KONTROLÜ
+                for (let j = Sys.items.length - 1; j >= 0; j--) { 
+                    const item = Sys.items[j]; 
+                    item.obj.rotation.z += dt * 3;
+
+                    if (item.obj.position.distanceTo(p.obj.position) < 3) { 
+                        if (item.type === 'battery' && p.battery < 100) { 
+                            p.battery = 100; scene.remove(item.obj); Sys.items.splice(j, 1); 
+                        }
+                        if (item.type === 'hp_kit' && p.hp < 100) { 
+                            p.hp = Math.min(100, p.hp + 50); 
+                            scene.remove(item.obj); Sys.items.splice(j, 1);
+                        }
+                    } 
+                }
             });
 
+            // ZOMBİ AI VE HAREKETİ
             const zSpeed = 5.5;
-            if (frameCount % 4 === 0) { 
-                Sys.zombies.forEach(z => {
-                    let closest = 999, target = null;
-                    Sys.players.forEach(p => { if (p.isDead) return; const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
-                    if(target && closest < 80) {
-                        z.obj.lookAt(target.obj.position.x, 9, target.obj.position.z);
-                        const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); z.obj.position.addScaledVector(fwd, zSpeed * dt * 4); 
-                        if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt * 4); 
-                        if(closest < 2.5 && Math.random() < 0.04 && !target.isDead) { 
-                            target.hp -= 10; playSound('hurt');
-                            triggerDamageFlash(target.id === 1 ? 0 : 1); 
-                        }
+            
+            Sys.zombies.forEach(z => {
+                let closest = 999, target = null;
+                Sys.players.forEach(p => { 
+                    if (p.isDead) return; 
+                    const d = p.obj.position.distanceTo(z.obj.position); 
+                    if(d < closest && p.hp > 0) { closest = d; target = p; } 
+                });
+                
+                if(target && closest < 80) {
+                    const batteryFactor = 1 + (100 - target.battery) / 200; 
+                    let currentZSpeed = zSpeed * batteryFactor;
+                    
+                    const timeSinceHit = now - z.lastHitTime;
+                    const retreatDuration = 300; 
+
+                    if (timeSinceHit < retreatDuration) {
+                         currentZSpeed = -zSpeed * 1.5; 
                     }
-                    if(z.sound && target) z.sound.setPlaybackRate(Math.min(1.0, 1 + (80 - closest) / 80)); 
-                });
-            } else {
-                 Sys.zombies.forEach(z => {
-                    let closest = 999, target = null;
-                    Sys.players.forEach(p => { if(p.isDead) return; const d = p.obj.position.distanceTo(z.obj.position); if(d < closest && p.hp > 0) { closest = d; target = p; } });
-                    if(target && closest < 80) { const fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); z.obj.position.addScaledVector(fwd, zSpeed * dt); if(checkCol(z.obj.position)) z.obj.position.addScaledVector(fwd, -zSpeed * dt); }
-                });
-            }
+
+                    z.obj.lookAt(target.obj.position.x, 9, target.obj.position.z);
+                    let fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion); 
+                    
+                    let nextPos = z.obj.position.clone().addScaledVector(fwd, currentZSpeed * dt);
+                    let attempts = 0;
+                    while (checkCol(nextPos) && attempts < 10 && timeSinceHit >= retreatDuration) { 
+                        const angle = (Math.random() < 0.5 ? 1 : -1) * (Math.PI / 8); 
+                        z.obj.rotation.y += angle;
+                        fwd = new THREE.Vector3(0,0,1).applyQuaternion(z.obj.quaternion);
+                        nextPos = z.obj.position.clone().addScaledVector(fwd, currentZSpeed * dt);
+                        attempts++;
+                    }
+
+                    if (attempts < 10 || timeSinceHit < retreatDuration) { 
+                        z.obj.position.copy(nextPos);
+                    } else {
+                        z.obj.position.addScaledVector(fwd, -currentZSpeed * dt * 0.5);
+                    }
+                    
+                    if(closest < 2.5 && Math.random() < 0.04 && !target.isDead) { 
+                        target.hp -= 10; playSound('hurt');
+                        triggerDamageFlash(target.id === 1 ? 0 : 1); 
+                    }
+                }
+                if(z.sound && target) z.sound.setPlaybackRate(Math.min(1.0, 1 + (80 - closest) / 80)); 
+            });
+
 
             if(InputMap.p1?.type==='keyboard') { mx=0; my=0; }
             const w=window.innerWidth, h=window.innerHeight;
