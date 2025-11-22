@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Backrooms: TARGETING & REWARDS</title>
+    <title>Backrooms: TARGETING FIX & REWARDS</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; user-select: none; -webkit-user-select: none; touch-action: none; }
         
@@ -33,6 +33,7 @@
         .crosshair {
             position: absolute;
             top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
             width: 20px;
             height: 20px;
@@ -40,7 +41,7 @@
             z-index: 500;
             display: none;
         }
-        .crosshair:before, .crosshair:after { content: ''; position: absolute; background: white; }
+        .crosshair:before, .crosshair:after { content: ''; position: absolute; background: rgba(255, 255, 255, 0.9); box-shadow: 0 0 2px black; }
         .crosshair:before { width: 2px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); }
         .crosshair:after { height: 2px; width: 100%; top: 50%; left: 0; transform: translateY(-50%); }
 
@@ -307,7 +308,6 @@
         window.startGame = () => {
             document.getElementById('menu').style.display = 'none';
             
-            // UI Ayarları
             const c1 = document.getElementById('crosshair-p1');
             const c2 = document.getElementById('crosshair-p2');
             const p1GO = document.getElementById('go-p1');
@@ -319,7 +319,6 @@
             c1.style.display = 'block';
 
             if(Sys.mode === 2) {
-                // 2 Kişilik Mod
                 c1.style.left = '25%'; 
                 c2.style.display = 'block';
                 c2.style.left = '75%'; 
@@ -330,7 +329,6 @@
                 p1GO.style.width = '50%'; p1GO.style.left = '0';
                 p2GO.style.width = '50%'; p2GO.style.left = '50%';
             } else {
-                // Tek Kişilik Mod
                 c1.style.left = '50%';
                 p1GO.style.width = '100%'; p1GO.style.left = '0';
             }
@@ -431,41 +429,54 @@
             }
         }
 
+        // --- DÜZELTİLMİŞ ATTACK FONKSİYONU ---
         function attack(pIdx) {
             if(!Sys.players[pIdx] || Sys.paused || Sys.players[pIdx].isDead) return;
-            const p = Sys.players[pIdx]; p.cam.position.y -= 0.2; setTimeout(()=>p.cam.position.y+=0.2, 50);
+            const p = Sys.players[pIdx]; 
+            // Görsel geri bildirim
+            p.cam.position.y -= 0.2; setTimeout(()=>p.cam.position.y+=0.2, 50);
+            
             let hit = false;
             
-            // Oyuncunun baktığı yön (Forward vector)
-            const pDir = new THREE.Vector3(0, 0, -1).applyQuaternion(p.cam.quaternion).normalize();
+            // Kameranın DÜNYA koordinatlarında baktığı yönü al (FIX)
+            const pDir = new THREE.Vector3();
+            p.cam.updateMatrixWorld(); // Matrisi güncelle
+            p.cam.getWorldDirection(pDir);
+            pDir.normalize();
 
             for(let i=0; i<Sys.zombies.length; i++) {
                 const z = Sys.zombies[i];
                 
-                // Zombiye olan vektör
+                // Oyuncudan zombiye olan vektör
                 const toZombie = z.obj.position.clone().sub(p.obj.position);
                 const dist = toZombie.length();
                 toZombie.normalize();
 
-                // Dot product hesabı: Eğer 1'e yakınsa tam bakıyordur.
+                // Yöney çarpımı (Dot product)
                 const dot = pDir.dot(toZombie);
 
-                // Vuruş koşulu: Mesafe < 25 VE Bakış açısı çok dar (Dot > 0.9)
-                if(dist < 25 && dot > 0.9) {
+                // Mesafe < 25 VE Bakış açısı dar (Dot > 0.95 = ~18 derece koni)
+                if(dist < 25 && dot > 0.95) {
                     z.hp--; hit=true; playSound('attack'); playSound('hurt');
+                    // Kırmızı yanıp sönme
                     z.obj.children[0].children.forEach(m => { if(m.material.color) m.material.color.setHex(0xff0000); });
                     setTimeout(() => { if(z.obj) z.obj.children[0].children.forEach((m,k) => { const def = (k===0)?0x4a6b4a:(k===4||k===5||k===6)?0x3d5c5c:(k===7||k===8)?0x2a2a5c:0x111111; if(m.material.color) m.material.color.setHex(def); }); }, 100);
-                    const k = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(5); z.obj.position.add(k);
                     
+                    // Geri tepme
+                    const k = new THREE.Vector3().subVectors(z.obj.position, p.obj.position).normalize().multiplyScalar(5); 
+                    z.obj.position.add(k);
+                    
+                    // Zombi ölümü
                     if(z.hp <= 0) { 
                         scene.remove(z.obj); if(z.sound) z.sound.stop(); Sys.zombies.splice(i, 1); 
-                        // ÖDÜL SİSTEMİ: +25 Can
+                        // ÖDÜL: Can +25 (Sınır yok)
                         p.hp += 25; 
                     } 
-                    break;
+                    break; // Bir vuruşta tek zombi
                 }
             }
-            // Friendly Fire (Arkadaş vurma) hala mesafe bazlı kalsın mı? Hayır, onu da nişangaha göre yapalım.
+            
+            // Friendly Fire (Arkadaş vurma) için de aynı mantık
             if(!hit && Sys.mode===2) {
                 Sys.players.forEach((t, ti) => { 
                     if(ti!==pIdx && !t.isDead) {
@@ -473,7 +484,8 @@
                         const dist = toT.length();
                         toT.normalize();
                         const dot = pDir.dot(toT);
-                        if(dist < 25 && dot > 0.9) { 
+                        // Arkadaş vurma biraz daha zor olsun (dot > 0.95)
+                        if(dist < 25 && dot > 0.95) { 
                             t.hp-=10; hit=true; playSound('attack'); playSound('hurt'); 
                             const k = new THREE.Vector3().subVectors(t.obj.position, p.obj.position).normalize().multiplyScalar(8); t.obj.position.add(k); t.obj.position.y+=2; t.onGround=false; 
                             if(t.id===1) { const ov=document.getElementById('damage-overlay'); ov.style.opacity=0.5; setTimeout(()=>ov.style.opacity=0, 100); } 
@@ -595,7 +607,7 @@
                 } else if (p.battery < 100) { p.battery += dt * 1; }
                 p.battery = Math.min(100, Math.max(0, p.battery)); 
                 
-                // Update UI Bars (Clamp visual at 100% but allow value > 100)
+                // Update UI Bars (Sınırı sadece görsel olarak 100 yap, değişken artabilsin)
                 const hpBar = document.querySelector(`#hp-p${p.id} .health-fill`);
                 const batBar = document.querySelector(`#bat-p${p.id} .battery-fill`);
                 if(hpBar) hpBar.style.width = Math.min(100, Math.max(0, p.hp)) + '%'; 
